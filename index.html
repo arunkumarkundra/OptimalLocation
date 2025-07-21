@@ -414,23 +414,34 @@
         }
 
         // Geocoding using Nominatim
-        async function geocode(address) {
-            try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    return {
-                        lat: parseFloat(data[0].lat),
-                        lon: parseFloat(data[0].lon),
-                        display_name: data[0].display_name
-                    };
-                }
-                throw new Error('Location not found');
-            } catch (error) {
-                console.error('Geocoding error:', error);
-                throw error;
-            }
+
+ async function geocode(address, biasLat = null, biasLon = null) {
+    try {
+        let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1`;
+        
+        // Add geographic bias if available
+        if (biasLat && biasLon) {
+            url += `&lat=${biasLat}&lon=${biasLon}&radius=50000`; // 50km radius
+        } else {
+            // Default bias to Bangalore area
+            url += `&lat=12.9716&lon=77.5946&radius=100000`; // 100km radius around Bangalore
         }
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data && data.length > 0) {
+            return {
+                lat: parseFloat(data[0].lat),
+                lon: parseFloat(data[0].lon),
+                display_name: data[0].display_name
+            };
+        }
+        throw new Error('Location not found');
+    } catch (error) {
+        console.error('Geocoding error:', error);
+        throw error;
+    }
+}
 
         // Add destination input
 
@@ -510,7 +521,19 @@ function setupAutocomplete(input, dropdown) {
         // Debounce API calls
         currentRequest = setTimeout(async () => {
             try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
+let searchUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8&addressdetails=1`;
+// Add geographic bias based on existing destinations or default to Bangalore
+const existingDestinations = destinations.filter(d => d.lat && d.lon);
+if (existingDestinations.length > 0) {
+    const avgLat = existingDestinations.reduce((sum, d) => sum + d.lat, 0) / existingDestinations.length;
+    const avgLon = existingDestinations.reduce((sum, d) => sum + d.lon, 0) / existingDestinations.length;
+    searchUrl += `&lat=${avgLat}&lon=${avgLon}&radius=50000`;
+} else {
+    searchUrl += `&lat=12.9716&lon=77.5946&radius=100000`; // Bangalore bias
+}
+
+const response = await fetch(searchUrl);
+    
                 const results = await response.json();
                 showAutocompleteOptions(dropdown, results, input);
             } catch (error) {
@@ -538,9 +561,16 @@ function showCoordinateOption(dropdown, coords, originalQuery) {
     dropdown.style.display = 'block';
     
     // Add click event listener
-    dropdown.querySelector('.autocomplete-option').addEventListener('click', function() {
-        selectLocation(coords.lat, coords.lon, originalQuery, this);
-    });
+dropdown.querySelector('.autocomplete-option').addEventListener('click', function() {
+    const destinationItem = this.closest('.destination-item');
+    const input = destinationItem.querySelector('.location-input');
+    input.value = originalQuery;
+    input.setAttribute('data-lat', coords.lat);
+    input.setAttribute('data-lon', coords.lon);
+    input.setAttribute('data-display-name', originalQuery);
+    dropdown.style.display = 'none';
+    previewDestination(destinationItem, coords.lat, coords.lon, originalQuery);
+});
 }
 
         
@@ -580,6 +610,7 @@ function selectCoordinate(lat, lon, query, element) {
 }
 
 // Select location from dropdown
+
 function selectLocation(lat, lon, displayName, element) {
     const destinationItem = element.closest('.destination-item');
     const input = destinationItem.querySelector('.location-input');
@@ -587,8 +618,17 @@ function selectLocation(lat, lon, displayName, element) {
     
     input.value = displayName.length > 50 ? displayName.substring(0, 50) + '...' : displayName;
     dropdown.style.display = 'none';
+    
+    // Store coordinates as data attributes
+    input.setAttribute('data-lat', lat);
+    input.setAttribute('data-lon', lon);
+    input.setAttribute('data-display-name', displayName);
+    
     previewDestination(destinationItem, parseFloat(lat), parseFloat(lon), displayName);
 }
+        
+
+        
         
 // Preview destination on map
 function previewDestination(destinationItem, lat, lon, displayName) {
@@ -643,29 +683,50 @@ function previewDestination(destinationItem, lat, lon, displayName) {
                 // Collect destinations
                 destinations = [];
                 const destinationItems = document.querySelectorAll('.destination-item');
+
+
+for (let item of destinationItems) {
+    const locationInput = item.querySelector('.location-input');
+    const location = locationInput.value.trim();
+    const name = item.querySelector('.name-input').value.trim() || location;
+    const weight = parseFloat(item.querySelector('.weight-input').value) || 1.0;
+    
+    if (location) {
+        // Check if coordinates are already stored
+        const storedLat = locationInput.getAttribute('data-lat');
+        const storedLon = locationInput.getAttribute('data-lon');
+        const storedDisplayName = locationInput.getAttribute('data-display-name');
+        
+        if (storedLat && storedLon) {
+            // Use stored coordinates
+            destinations.push({
+                name: name,
+                location: location,
+                lat: parseFloat(storedLat),
+                lon: parseFloat(storedLon),
+                weight: weight,
+                display_name: storedDisplayName || location
+            });
+        } else {
+            // Fallback to geocoding if no stored coordinates
+            try {
+                const coords = await geocode(location);
+                destinations.push({
+                    name: name,
+                    location: location,
+                    lat: coords.lat,
+                    lon: coords.lon,
+                    weight: weight,
+                    display_name: coords.display_name
+                });
+            } catch (error) {
+                alert(`Could not find location: ${location}`);
+                continue;
+            }
+        }
+    }
+}
                 
-                for (let item of destinationItems) {
-                    const location = item.querySelector('.location-input').value.trim();
-                    const name = item.querySelector('.name-input').value.trim() || location;
-                    const weight = parseFloat(item.querySelector('.weight-input').value) || 1.0;
-                    
-                    if (location) {
-                        try {
-                            const coords = await geocode(location);
-                            destinations.push({
-                                name: name,
-                                location: location,
-                                lat: coords.lat,
-                                lon: coords.lon,
-                                weight: weight,
-                                display_name: coords.display_name
-                            });
-                        } catch (error) {
-                            alert(`Could not find location: ${location}`);
-                            continue;
-                        }
-                    }
-                }
 
                 if (destinations.length < 1) {
                     alert('Please add at least one valid destination');
