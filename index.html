@@ -320,9 +320,11 @@
         <div class="main-content">
             <div class="input-section">
                 <h2>📍 Destinations</h2>
-<input type="file" id="importFile" accept=".csv" style="display:none;" onchange="importResults(event)">
-<button class="btn btn-primary" onclick="document.getElementById('importFile').click()">📂 Import Results</button>
-
+<div class="control-group">
+    <input type="file" id="importFile" accept=".csv" style="display:none;" onchange="importResults(event)">
+    <button class="btn btn-primary" onclick="document.getElementById('importFile').click()">📂 Import Results</button>
+</div>
+                
                 <div id="destinationsContainer">
                     <div class="destination-item">
 <div class="destination-inputs">
