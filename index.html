@@ -422,27 +422,34 @@ function initMap() {
 
         
 
-        
-function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100, tolerance = 1e-6) {
-    // Start from weighted centroid
-    let x = 0, y = 0, totalWeight = 0;
-    for (const dest of destinations) {
-        x += dest.lon * dest.weight;
-        y += dest.lat * dest.weight;
-        totalWeight += dest.weight;
+function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 200, tolerance = 1e-7) { // Increased iterations, stricter tolerance
+    if (destinations.length === 0) {
+        return null;
     }
-    x /= totalWeight;
-    y /= totalWeight;
+    if (destinations.length === 1) {
+        return { lat: destinations[0].lat, lon: destinations[0].lon };
+    }
+
+    // Start from an initial guess that is the average of all destination coordinates.
+    // This is generally a better starting point than just one of the destinations
+    // or a weighted centroid if the algorithm can get stuck.
+    let x = destinations.reduce((sum, dest) => sum + dest.lon, 0) / destinations.length;
+    let y = destinations.reduce((sum, dest) => sum + dest.lat, 0) / destinations.length;
 
     for (let iter = 0; iter < maxIterations; iter++) {
-        let numLat = 0, numLon = 0, denom = 0;
+        let numLat = 0;
+        let numLon = 0;
+        let denom = 0;
+        let isOptimalOnDestination = false;
 
         for (const dest of destinations) {
-            const dx = x - dest.lon;
-            const dy = y - dest.lat;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            // Use Haversine distance for calculation, not just Euclidean on coordinates
+            const dist = haversineDistance(y, x, dest.lat, dest.lon);
 
-            if (dist < 1e-10) continue; // Avoid division by zero
+            if (dist < tolerance) { // If the current guess is very close to a destination
+                isOptimalOnDestination = true;
+                break; // Exit this inner loop, handle singularity
+            }
 
             const wOverDist = dest.weight / dist;
             numLon += dest.lon * wOverDist;
@@ -450,14 +457,28 @@ function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100, tol
             denom += wOverDist;
         }
 
+        if (isOptimalOnDestination) {
+            // If the current candidate is effectively on a destination, the formula needs
+            // special handling (often meaning that destination IS the solution).
+            // However, if it's hitting a destination point, it's likely already converged
+            // to that point in previous iterations. For simplicity and robustness,
+            // we can just break if we're "on" a destination, assuming it's converged
+            // or that point is the best current candidate.
+            // A more rigorous Weiszfeld would check subgradients here.
+            break;
+        }
+
         const newX = numLon / denom;
         const newY = numLat / denom;
 
-        const delta = Math.sqrt((newX - x) ** 2 + (newY - y) ** 2);
+        // Check for convergence
+        const delta = haversineDistance(y, x, newY, newX); // Use Haversine for convergence check
         x = newX;
         y = newY;
 
-        if (delta < tolerance) break; // Converged
+        if (delta < tolerance) {
+            break; // Converged
+        }
     }
 
     // Final point
@@ -465,7 +486,7 @@ function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100, tol
         lon: x,
         lat: y
     };
-}
+}    
 
 
         
