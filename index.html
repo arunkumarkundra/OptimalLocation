@@ -337,27 +337,7 @@
                 </div>
 
                 <button class="btn btn-primary" onclick="addDestination()">+ Add Destination</button>
-                
-                <div class="controls">
-                    <div class="control-group">
-                        <label>Grid Spacing</label>
-                        <select id="gridSpacing">
-                            <option value="0.01">Coarse (0.01°)</option>
-                            <option value="0.005" selected>Standard (0.005°)</option>
-                            <option value="0.002">Fine (0.002°)</option>
-                        </select>
-                    </div>
-                    <div class="control-group">
-                        <label>Buffer Size</label>
-                        <select id="bufferSize">
-                            <option value="0.03">Small (0.03°)</option>
-                            <option value="0.05" selected>Standard (0.05°)</option>
-                            <option value="0.08">Large (0.08°)</option>
-                        </select>
-                    </div>
-                </div>
-
-                
+                                
                 <button class="btn btn-success" onclick="findOptimalLocation()">🎯 Find Optimal Location</button>
 
                 <div class="loading" id="loading">
@@ -922,9 +902,6 @@ optimalLocation = result;
                 <div class="result-item">
                     <strong>📊 Analysis Summary</strong><br>
                     Total destinations: ${destinations.length}<br>
-                    Grid points evaluated: ${gridPoints.length.toLocaleString()}<br>
-                    Grid spacing: ${document.getElementById('gridSpacing').value}°<br>
-                    Buffer size: ${document.getElementById('bufferSize').value}°
                 </div>
             `;
 
