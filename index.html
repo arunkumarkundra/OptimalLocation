@@ -426,13 +426,11 @@ function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, 
         return null;
     }
     if (destinations.length === 1) {
-        // If only one destination, it's the optimal location for that single point.
-        // If you want to *avoid* this, you'd need a different strategy for 1 point.
         return { lat: destinations[0].lat, lon: destinations[0].lon };
     }
 
     let totalWeight = destinations.reduce((sum, dest) => sum + dest.weight, 0);
-    // Initialize with weighted average
+    // Initialize with weighted average or any reasonable starting point
     let x = destinations.reduce((sum, dest) => sum + dest.lon * dest.weight, 0) / totalWeight;
     let y = destinations.reduce((sum, dest) => sum + dest.lat * dest.weight, 0) / totalWeight;
 
@@ -440,17 +438,17 @@ function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, 
         let numLat = 0;
         let numLon = 0;
         let denom = 0;
-        let shouldPerturb = false; // Flag to indicate if we need to perturb
+        let atSingularPoint = false;
+        let singularDestIndex = -1;
 
         for (let i = 0; i < destinations.length; i++) {
             const dest = destinations[i];
             const dist = haversineDistance(y, x, dest.lat, dest.lon);
 
-            // If the current candidate point (y, x) is very close to any destination
-            // then we flag it to be perturbed, regardless of mathematical optimality.
-            if (dist < tolerance) {
-                shouldPerturb = true;
-                break; // No need to check other destinations, we'll perturb
+            if (dist < tolerance) { // Check for singularity
+                atSingularPoint = true;
+                singularDestIndex = i;
+                break;
             }
 
             const wOverDist = dest.weight / dist;
@@ -459,17 +457,47 @@ function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, 
             denom += wOverDist;
         }
 
-        if (shouldPerturb) {
-            // Force a perturbation to move away from the destination point
-            // This is a heuristic to prevent convergence to an input point.
-            x += (Math.random() - 0.5) * tolerance * 10; // Small random perturbation
-            y += (Math.random() - 0.5) * tolerance * 10; // Small random perturbation
-            // Console log for debugging, indicates deviation from standard behavior
-            console.warn(`Iteration ${iter}: Candidate location too close to a destination (${y.toFixed(6)}, ${x.toFixed(6)}). Perturbing.`);
-            continue; // Continue with the next iteration from the perturbed point
+        if (atSingularPoint) {
+            // Subgradient condition check for the singular point
+            const singularDest = destinations[singularDestIndex];
+            let subgradientX = 0;
+            let subgradientY = 0;
+
+            for (let i = 0; i < destinations.length; i++) {
+                if (i === singularDestIndex) continue; // Skip the singular point itself
+                const otherDest = destinations[i];
+                const distToOther = haversineDistance(singularDest.lat, singularDest.lon, otherDest.lat, otherDest.lon);
+                
+                // If another point is also very close to the singular point, its contribution becomes undefined.
+                // In practice, this means we should exclude it from this sum or handle its proximity.
+                // For simplicity, we assume distToOther will be > tolerance here.
+                if (distToOther > tolerance) { 
+                    subgradientY += otherDest.weight * (otherDest.lat - singularDest.lat) / distToOther;
+                    subgradientX += otherDest.weight * (otherDest.lon - singularDest.lon) / distToOther;
+                }
+            }
+            
+            // The Euclidean norm of the subgradient vector must be less than or equal to the weight of the singular point.
+            // Note: This is still an approximation given we're using Haversine distances for individual components,
+            // but it's the standard approach for the Weiszfeld algorithm in Euclidean space, adapted for geo-coordinates.
+            const subgradientMagnitude = Math.sqrt(subgradientX * subgradientX + subgradientY * subgradientY);
+
+            if (subgradientMagnitude <= singularDest.weight) {
+                // The singular destination IS the optimal point
+                x = singularDest.lon;
+                y = singularDest.lat;
+                break; // Converged
+            } else {
+                // The singular destination is NOT the optimal point, perturb and continue
+                // This is a heuristic to escape the singularity, allowing the algorithm to continue searching.
+                // A small random perturbation is often used.
+                x += (Math.random() - 0.5) * tolerance * 10; 
+                y += (Math.random() - 0.5) * tolerance * 10; 
+                continue; // Continue with the next iteration from the perturbed point
+            }
         }
 
-        // If not too close to any destination, proceed with the standard Weiszfeld update
+        // If not at a singular point, proceed with the standard Weiszfeld update
         const newX = numLon / denom;
         const newY = numLat / denom;
 
@@ -478,7 +506,7 @@ function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, 
         y = newY;
 
         if (delta < tolerance) {
-            break; // Converged to a point not "on" a destination
+            break; // Converged
         }
     }
 
@@ -487,6 +515,7 @@ function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, 
         lat: y
     };
 }
+
 
         
         
