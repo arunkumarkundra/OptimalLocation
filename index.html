@@ -712,8 +712,11 @@ function removeDestination(button) {
         // Get color based on weighted distance (green = better, red = worse)
         function getColorForDistance(distance, minDist, maxDist) {
             const normalized = (distance - minDist) / (maxDist - minDist);
-            const hue = (1 - normalized) * 120; // 120 = green, 0 = red
-            return `hsl(${hue}, 70%, 50%)`;
+            // const hue = (1 - normalized) * 120; // 120 = green, 0 = red
+            // return `hsl(${hue}, 70%, 50%)`;
+
+            const hue = (1 - normalized) * 120;
+            return `hsl(${hue}, 90%, 45%)`; // Brighter, punchier color
         }
 
         // Main function to find optimal location
@@ -859,24 +862,35 @@ for (let item of destinationItems) {
             // Sample grid points for visualization (to avoid too many markers)
             const sampleSize = Math.min(gridPoints.length, 1000);
             const sampleStep = Math.floor(gridPoints.length / sampleSize);
-            
-            for (let i = 0; i < gridPoints.length; i += sampleStep) {
-                const point = gridPoints[i];
-                const color = getColorForDistance(point.avgWeightedDistance, minDist, maxDist);
-                
-                const circle = L.circleMarker([point.lat, point.lon], {
-                    radius: 3,
-                    fillColor: color,
-                    color: color,
-                    weight: 1,
-                    opacity: 0.6,
-                    fillOpacity: 0.4
-                }).bindPopup(`
-                    Weighted Distance: ${point.avgWeightedDistance.toFixed(2)} km
-                `);
-                layerGroups.grid.addLayer(circle);
-            }
 
+
+for (let i = 0; i < gridPoints.length; i += sampleStep) {
+    const point = gridPoints[i];
+
+    // Normalize score: 0 = best, 1 = worst
+    const normalized = (point.avgWeightedDistance - minDist) / (maxDist - minDist);
+
+    // Bigger & more visible near optimal point
+    const radius = 5 + (1 - normalized) * 5;          // From 5 (worst) to 10 (best)
+    const opacity = 0.2 + (1 - normalized) * 0.6;     // From 0.2 (faint) to 0.8 (bright)
+    
+    const color = getColorForDistance(point.avgWeightedDistance, minDist, maxDist);
+
+    const circle = L.circleMarker([point.lat, point.lon], {
+        radius: radius,
+        fillColor: color,
+        color: color,
+        weight: 0,
+        opacity: opacity,
+        fillOpacity: opacity
+    }).bindPopup(`
+        Weighted Distance: ${point.avgWeightedDistance.toFixed(2)} km
+    `);
+
+    layerGroups.grid.addLayer(circle);
+}
+
+            
             // Add optimal location
             const optimalMarker = L.marker([optimalLocation.lat, optimalLocation.lon], {
                 icon: L.divIcon({
