@@ -640,17 +640,24 @@ function selectLocation(lat, lon, displayName, element) {
         
         
 // Preview destination on map
+
 function previewDestination(destinationItem, lat, lon, displayName) {
     const destIndex = Array.from(destinationItem.parentElement.children).indexOf(destinationItem);
     const letter = getDestinationLetter(destIndex);
-    
+
+    // ✅ Force-save lat/lon/display_name into the input's dataset
+    const input = destinationItem.querySelector('.location-input');
+    input.setAttribute('data-lat', lat);
+    input.setAttribute('data-lon', lon);
+    input.setAttribute('data-display-name', displayName);
+
     // Remove existing preview for this destination
     layerGroups.destinations.eachLayer(layer => {
         if (layer.options && layer.options.destIndex === destIndex) {
             layerGroups.destinations.removeLayer(layer);
         }
     });
-    
+
     // Add new preview marker
     const marker = L.marker([lat, lon], {
         icon: L.divIcon({
@@ -660,10 +667,11 @@ function previewDestination(destinationItem, lat, lon, displayName) {
         }),
         destIndex: destIndex
     }).bindPopup(`<strong>Preview: ${letter}</strong><br><small>${displayName}</small>`);
-    
+
     layerGroups.destinations.addLayer(marker);
     map.setView([lat, lon], Math.max(map.getZoom(), 12));
 }
+
         
         // Remove destination input
 
