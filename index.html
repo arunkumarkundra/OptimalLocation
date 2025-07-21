@@ -421,183 +421,79 @@ function initMap() {
     }
 }
 
-function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 1000, tolerance = 1e-6) {
-    if (destinations.length === 0) return null;
+function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, tolerance = 1e-7) {
+    if (destinations.length === 0) {
+        return null;
+    }
     if (destinations.length === 1) {
         return { lat: destinations[0].lat, lon: destinations[0].lon };
     }
 
-    // Try multiple starting points and return the best result
-    const startingPoints = generateStartingPoints(destinations, 5);
-    let bestResult = null;
-    let bestObjective = Infinity;
+    const totalWeight = destinations.reduce((sum, dest) => sum + dest.weight, 0);
+    let x = destinations.reduce((sum, dest) => sum + dest.lon * dest.weight, 0) / totalWeight;
+    let y = destinations.reduce((sum, dest) => sum + dest.lat * dest.weight, 0) / totalWeight;
 
-    for (const startPoint of startingPoints) {
-        const result = weiszfeldIteration(destinations, startPoint, maxIterations, tolerance);
-        if (result && result.objective < bestObjective) {
-            bestResult = result;
-            bestObjective = result.objective;
-        }
-    }
-
-    return bestResult ? { lat: bestResult.lat, lon: bestResult.lon } : null;
-}
-
-
-
-function generateStartingPoints(destinations, numPoints = 5) {
-    const startingPoints = [];
-    
-    // 1. Weighted centroid (original method)
-    let totalWeight = destinations.reduce((sum, dest) => sum + dest.weight, 0);
-    const centroid = {
-        lat: destinations.reduce((sum, dest) => sum + dest.lat * dest.weight, 0) / totalWeight,
-        lon: destinations.reduce((sum, dest) => sum + dest.lon * dest.weight, 0) / totalWeight
-    };
-    startingPoints.push(centroid);
-    
-    // 2. Geographic center
-    const bounds = getBounds(destinations);
-    startingPoints.push({
-        lat: (bounds.minLat + bounds.maxLat) / 2,
-        lon: (bounds.minLon + bounds.maxLon) / 2
-    });
-    
-    // 3. Points around the centroid
-    const radius = getAverageDistance(destinations) * 0.1; // 10% of average distance
-    for (let i = 0; i < numPoints - 2; i++) {
-        const angle = (i * 2 * Math.PI) / (numPoints - 2);
-        startingPoints.push({
-            lat: centroid.lat + radius * Math.cos(angle) / 111, // Rough lat degree conversion
-            lon: centroid.lon + radius * Math.sin(angle) / (111 * Math.cos(centroid.lat * Math.PI / 180))
-        });
-    }
-    
-    return startingPoints;
-}
-
-function getBounds(destinations) {
-    return {
-        minLat: Math.min(...destinations.map(d => d.lat)),
-        maxLat: Math.max(...destinations.map(d => d.lat)),
-        minLon: Math.min(...destinations.map(d => d.lon)),
-        maxLon: Math.max(...destinations.map(d => d.lon))
-    };
-}
-
-function getAverageDistance(destinations) {
-    let totalDist = 0, count = 0;
-    for (let i = 0; i < destinations.length; i++) {
-        for (let j = i + 1; j < destinations.length; j++) {
-            totalDist += haversineDistance(destinations[i].lat, destinations[i].lon, 
-                                         destinations[j].lat, destinations[j].lon);
-            count++;
-        }
-    }
-    return count > 0 ? totalDist / count : 10; // Default 10km if single point
-}
-
-function weiszfeldIteration(destinations, startPoint, maxIterations, tolerance) {
-    let x = startPoint.lon;
-    let y = startPoint.lat;
-    const minDistanceFromDest = 0.05; // Minimum 50m from any destination
-    
     for (let iter = 0; iter < maxIterations; iter++) {
-        let numLat = 0, numLon = 0, denom = 0;
-        let tooCloseToDestination = false;
-        
-        // Check if too close to any destination
-        for (const dest of destinations) {
+        let numLat = 0;
+        let numLon = 0;
+        let denom = 0;
+        let closeToPoint = false;
+
+        for (let i = 0; i < destinations.length; i++) {
+            const dest = destinations[i];
             const dist = haversineDistance(y, x, dest.lat, dest.lon);
-            if (dist < minDistanceFromDest) {
-                tooCloseToDestination = true;
+
+            if (dist < tolerance) {
+                // Perturb slightly to avoid divide-by-zero and premature stopping
+                const perturbationFactor = tolerance * 10;
+                x += (Math.random() - 0.5) * perturbationFactor;
+                y += (Math.random() - 0.5) * perturbationFactor;
+                closeToPoint = true;
                 break;
             }
+
+            const weightOverDist = dest.weight / dist;
+            numLon += dest.lon * weightOverDist;
+            numLat += dest.lat * weightOverDist;
+            denom += weightOverDist;
         }
-        
-        // If too close to a destination, perturb away from it
-        if (tooCloseToDestination) {
-            const perturbResult = perturbAwayFromDestinations(y, x, destinations, minDistanceFromDest * 2);
-            x = perturbResult.lon;
-            y = perturbResult.lat;
-            continue;
+
+        if (closeToPoint) {
+            continue; // Skip update, try again from perturbed position
         }
-        
-        // Standard Weiszfeld update
-        for (const dest of destinations) {
-            const dist = haversineDistance(y, x, dest.lat, dest.lon);
-            if (dist > tolerance) {
-                const wOverDist = dest.weight / dist;
-                numLon += dest.lon * wOverDist;
-                numLat += dest.lat * wOverDist;
-                denom += wOverDist;
-            }
-        }
-        
-        if (denom === 0) break;
-        
+
         const newX = numLon / denom;
         const newY = numLat / denom;
+
         const delta = haversineDistance(y, x, newY, newX);
-        
         x = newX;
         y = newY;
-        
-        if (delta < tolerance) break;
-    }
-    
-    // Calculate final objective value
-    const objective = calculateObjective(y, x, destinations);
-    
-    return { lat: y, lon: x, objective: objective };
-}
 
-function perturbAwayFromDestinations(lat, lon, destinations, minDistance) {
-    // Find the closest destination
-    let closestDest = null;
-    let minDist = Infinity;
-    
-    for (const dest of destinations) {
-        const dist = haversineDistance(lat, lon, dest.lat, dest.lon);
-        if (dist < minDist) {
-            minDist = dist;
-            closestDest = dest;
+        if (delta < tolerance) {
+            break; // Converged
         }
     }
-    
-    if (!closestDest) return { lat, lon };
-    
-    // Move away from the closest destination
-    const bearing = Math.atan2(lon - closestDest.lon, lat - closestDest.lat);
-    const distanceToMove = minDistance / 111; // Rough conversion to degrees
-    
-    return {
-        lat: lat + distanceToMove * Math.cos(bearing),
-        lon: lon + distanceToMove * Math.sin(bearing)
-    };
+
+    return { lon: x, lat: y };
 }
 
-function calculateObjective(lat, lon, destinations) {
-    let totalWeightedDistance = 0;
-    for (const dest of destinations) {
-        const dist = haversineDistance(lat, lon, dest.lat, dest.lon);
-        totalWeightedDistance += dist * dest.weight;
-    }
-    return totalWeightedDistance;
-}
+
         
         
         // Haversine distance calculation
 function haversineDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const toRad = angle => angle * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in km
+    return R * c;
 }
+
 
 
         // Geocoding using Nominatim
@@ -984,12 +880,7 @@ for (let item of destinationItems) {
                 }
 
 // Compute optimal location using Weiszfeld’s algorithm
-// Compute optimal location using improved Weiszfeld's algorithm
 const result = computeOptimalLocation_Weiszfeld(destinations);
-if (!result) {
-    alert('Could not find optimal location');
-    return;
-}
 
 // Add back average weighted distance
 let totalWeightedDistance = 0, totalWeight = 0;
@@ -1000,11 +891,6 @@ for (const dest of destinations) {
 }
 result.avgWeightedDistance = totalWeightedDistance / totalWeight;
 
-// Validation: ensure result is not too close to any destination
-const minDistanceFromAnyDest = Math.min(...destinations.map(dest => 
-    haversineDistance(result.lat, result.lon, dest.lat, dest.lon)
-));
-console.log(`Optimal location is ${minDistanceFromAnyDest.toFixed(2)}km from nearest destination`);
 optimalLocation = result;
 
 
