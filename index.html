@@ -106,6 +106,58 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
+.autocomplete-container {
+    position: relative;
+}
+
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.autocomplete-option {
+    padding: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+}
+
+.autocomplete-option:hover {
+    background: #f8f9fa;
+}
+
+.autocomplete-option:last-child {
+    border-bottom: none;
+}
+
+.destination-label {
+    margin-top: 10px;
+    font-weight: 600;
+    color: #667eea;
+}
+
+.dest-letter {
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    background: #667eea;
+    color: white;
+    text-align: center;
+    line-height: 25px;
+    border-radius: 50%;
+    font-size: 0.9rem;
+}
+        
         .weight-input {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
@@ -335,7 +387,9 @@
             grid: L.layerGroup(),
             optimal: L.layerGroup()
         };
-
+        let destinationCounter = 0;
+        let geocodeTimeouts = {};
+        
         // Initialize map
         function initMap() {
             map = L.map('map').setView([40.7128, -74.0060], 10);
@@ -379,21 +433,155 @@
         }
 
         // Add destination input
-        function addDestination() {
-            const container = document.getElementById('destinationsContainer');
-            const destinationItem = document.createElement('div');
-            destinationItem.className = 'destination-item';
-            destinationItem.innerHTML = `
-                <div class="destination-inputs">
-                    <input type="text" placeholder="Address or Location" class="location-input">
-                    <input type="text" placeholder="Name (optional)" class="name-input">
-                    <input type="number" min="0.1" step="0.1" value="1.0" class="weight-input" placeholder="Weight">
-                </div>
-                <button class="btn btn-secondary remove-destination" onclick="removeDestination(this)">Remove</button>
-            `;
-            container.appendChild(destinationItem);
-        }
+function addDestination() {
+    const container = document.getElementById('destinationsContainer');
+    const destinationItem = document.createElement('div');
+    const letter = getDestinationLetter(container.children.length);
+    
+    destinationItem.className = 'destination-item';
+    destinationItem.innerHTML = `
+        <div class="destination-inputs">
+            <div class="autocomplete-container">
+                <input type="text" placeholder="Address, place name, or coordinates" class="location-input">
+                <div class="autocomplete-dropdown" style="display: none;"></div>
+            </div>
+            <input type="text" placeholder="Name (optional)" class="name-input">
+            <input type="number" min="0.1" step="0.1" value="1.0" class="weight-input" placeholder="Weight">
+        </div>
+        <div class="destination-label">Destination: <span class="dest-letter">${letter}</span></div>
+        <button class="btn btn-secondary remove-destination" onclick="removeDestination(this)">Remove</button>
+    `;
+    
+    container.appendChild(destinationItem);
+    
+    // Setup autocomplete for the new input
+    const input = destinationItem.querySelector('.location-input');
+    const dropdown = destinationItem.querySelector('.autocomplete-dropdown');
+    setupAutocomplete(input, dropdown);
+}
 
+// Get letter for destination (A, B, C...)
+function getDestinationLetter(index) {
+    return String.fromCharCode(65 + index); // A=65, B=66, etc.
+}
+
+// Parse coordinates from string
+function parseCoordinates(input) {
+    const coordRegex = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?)\s*[,\s]\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
+    const match = input.trim().match(coordRegex);
+    if (match) {
+        const parts = input.split(/[,\s]+/);
+        return {
+            lat: parseFloat(parts[0]),
+            lon: parseFloat(parts[1])
+        };
+    }
+    return null;
+}
+
+// Setup autocomplete for location input
+function setupAutocomplete(input, dropdown) {
+    let currentRequest = null;
+    
+    input.addEventListener('input', function() {
+        const query = this.value.trim();
+        dropdown.style.display = 'none';
+        
+        if (query.length < 3) return;
+        
+        // Check if it's coordinates
+        const coords = parseCoordinates(query);
+        if (coords) {
+            showCoordinateOption(dropdown, coords, query);
+            return;
+        }
+        
+        // Cancel previous request
+        if (currentRequest) {
+            clearTimeout(currentRequest);
+        }
+        
+        // Debounce API calls
+        currentRequest = setTimeout(async () => {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
+                const results = await response.json();
+                showAutocompleteOptions(dropdown, results, input);
+            } catch (error) {
+                console.error('Autocomplete error:', error);
+            }
+        }, 300);
+    });
+}
+
+// Show coordinate option in dropdown
+function showCoordinateOption(dropdown, coords, originalQuery) {
+    dropdown.innerHTML = `
+        <div class="autocomplete-option" onclick="selectCoordinate('${coords.lat}', '${coords.lon}', '${originalQuery}', this)">
+            📍 Coordinates: ${coords.lat}, ${coords.lon}
+        </div>
+    `;
+    dropdown.style.display = 'block';
+}
+
+// Show autocomplete options
+function showAutocompleteOptions(dropdown, results, input) {
+    if (results.length === 0) {
+        dropdown.style.display = 'none';
+        return;
+    }
+    
+    dropdown.innerHTML = results.map(result => `
+        <div class="autocomplete-option" onclick="selectLocation('${result.lat}', '${result.lon}', '${result.display_name.replace(/'/g, "\\'")}', this)">
+            📍 ${result.display_name}
+        </div>
+    `).join('');
+    
+    dropdown.style.display = 'block';
+}
+
+// Select coordinate from dropdown
+function selectCoordinate(lat, lon, query, element) {
+    const input = element.closest('.destination-item').querySelector('.location-input');
+    input.value = query;
+    element.closest('.autocomplete-dropdown').style.display = 'none';
+    previewDestination(element.closest('.destination-item'), parseFloat(lat), parseFloat(lon), query);
+}
+
+// Select location from dropdown
+function selectLocation(lat, lon, displayName, element) {
+    const input = element.closest('.destination-item').querySelector('.location-input');
+    input.value = displayName.substring(0, 50) + (displayName.length > 50 ? '...' : '');
+    element.closest('.autocomplete-dropdown').style.display = 'none';
+    previewDestination(element.closest('.destination-item'), parseFloat(lat), parseFloat(lon), displayName);
+}
+
+// Preview destination on map
+function previewDestination(destinationItem, lat, lon, displayName) {
+    const destIndex = Array.from(destinationItem.parentElement.children).indexOf(destinationItem);
+    const letter = getDestinationLetter(destIndex);
+    
+    // Remove existing preview for this destination
+    layerGroups.destinations.eachLayer(layer => {
+        if (layer.options && layer.options.destIndex === destIndex) {
+            layerGroups.destinations.removeLayer(layer);
+        }
+    });
+    
+    // Add new preview marker
+    const marker = L.marker([lat, lon], {
+        icon: L.divIcon({
+            html: `<div style="background: #e74c3c; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">${letter}</div>`,
+            iconSize: [30, 30],
+            className: 'preview-marker'
+        }),
+        destIndex: destIndex
+    }).bindPopup(`<strong>Preview: ${letter}</strong><br><small>${displayName}</small>`);
+    
+    layerGroups.destinations.addLayer(marker);
+    map.setView([lat, lon], Math.max(map.getZoom(), 12));
+}
+        
         // Remove destination input
         function removeDestination(button) {
             const container = document.getElementById('destinationsContainer');
@@ -506,19 +694,19 @@
 
         // Visualize results on map
         async function visualizeResults() {
-            // Add destinations
-            destinations.forEach((dest, index) => {
-                const marker = L.marker([dest.lat, dest.lon], {
-                    icon: L.divIcon({
-                        html: `<div style="background: #e74c3c; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">${index + 1}</div>`,
-                        iconSize: [30, 30],
-                        className: 'custom-marker'
-                    })
-                }).bindPopup(`
-                    <strong>${dest.name}</strong><br>
-                    Weight: ${dest.weight}<br>
-                    <small>${dest.display_name}</small>
-                `);
+            // Add destinationsdestinations.forEach((dest, index) => {
+    const letter = getDestinationLetter(index);
+    const marker = L.marker([dest.lat, dest.lon], {
+        icon: L.divIcon({
+            html: `<div style="background: #e74c3c; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">${letter}</div>`,
+            iconSize: [30, 30],
+            className: 'custom-marker'
+        })
+    }).bindPopup(`
+        <strong>${letter}. ${dest.name}</strong><br>
+        Weight: ${dest.weight}<br>
+        <small>${dest.display_name}</small>
+    `);
                 layerGroups.destinations.addLayer(marker);
             });
 
@@ -637,9 +825,14 @@
         }
 
         // Initialize the app
-        window.onload = function() {
-            initMap();
-        };
+window.onload = function() {
+    initMap();
+    
+    // Setup autocomplete for initial destination
+    const initialInput = document.querySelector('.location-input');
+    const initialDropdown = document.querySelector('.autocomplete-dropdown');
+    setupAutocomplete(initialInput, initialDropdown);
+};
     </script>
 </body>
 </html>
