@@ -465,7 +465,10 @@
     `;
     
     container.appendChild(destinationItem);
-    
+    updateAllDestinationMarkers();
+    destinationItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+
     // Setup autocomplete for the new input
     const input = destinationItem.querySelector('.location-input');
     const dropdown = destinationItem.querySelector('.autocomplete-dropdown');
@@ -483,18 +486,24 @@ function getDestinationLetter(index) {
 }
 
 // Parse coordinates from string
+
 function parseCoordinates(input) {
-    const coordRegex = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?)\s*[,\s]\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
+    // Match strictly: latitude, longitude (comma separated)
+    const coordRegex = /^\s*([-+]?\d{1,2}(?:\.\d+)?),\s*([-+]?\d{1,3}(?:\.\d+)?)\s*$/;
     const match = input.trim().match(coordRegex);
+    
     if (match) {
-        const parts = input.split(/[,\s]+/);
-        return {
-            lat: parseFloat(parts[0]),
-            lon: parseFloat(parts[1])
-        };
+        const lat = parseFloat(match[1]);
+        const lon = parseFloat(match[2]);
+
+        if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+            return { lat, lon };
+        }
     }
     return null;
 }
+
+
 
 // Setup autocomplete for location input
 function setupAutocomplete(input, dropdown) {
@@ -658,26 +667,37 @@ function previewDestination(destinationItem, lat, lon, displayName) {
         
         // Remove destination input
 
+function updateAllDestinationMarkers() {
+    layerGroups.destinations.clearLayers(); // Clear all destination markers
 
+    const container = document.getElementById('destinationsContainer');
+    const items = container.querySelectorAll('.destination-item');
+
+    items.forEach((item, index) => {
+        const locationInput = item.querySelector('.location-input');
+        const lat = parseFloat(locationInput.getAttribute('data-lat'));
+        const lon = parseFloat(locationInput.getAttribute('data-lon'));
+        const displayName = locationInput.getAttribute('data-display-name');
+        
+        // Update label in DOM
+        item.querySelector('.dest-letter').textContent = getDestinationLetter(index);
+
+        if (lat && lon && displayName) {
+            previewDestination(item, lat, lon, displayName);
+        }
+    });
+}
+
+
+        
 function removeDestination(button) {
     const container = document.getElementById('destinationsContainer');
     if (container.children.length > 1) {
         button.parentElement.remove();
-
-        // Re-label destinations and update preview
-        const items = container.querySelectorAll('.destination-item');
-        items.forEach((item, index) => {
-            item.querySelector('.dest-letter').textContent = getDestinationLetter(index);
-            const locationInput = item.querySelector('.location-input');
-            const lat = parseFloat(locationInput.getAttribute('data-lat'));
-            const lon = parseFloat(locationInput.getAttribute('data-lon'));
-            const displayName = locationInput.getAttribute('data-display-name');
-            if (lat && lon && displayName) {
-                previewDestination(item, lat, lon, displayName);
-            }
-        });
+        updateAllDestinationMarkers();  // Re-render all markers
     }
 }
+
 
         
 
