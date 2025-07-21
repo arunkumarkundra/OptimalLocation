@@ -433,6 +433,9 @@ function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, 
     let x = destinations.reduce((sum, dest) => sum + dest.lon * dest.weight, 0) / totalWeight;
     let y = destinations.reduce((sum, dest) => sum + dest.lat * dest.weight, 0) / totalWeight;
 
+// returning weighted average itself without loop calculation 
+        return { lon: x, lat: y };
+    
     for (let iter = 0; iter < maxIterations; iter++) {
         let numLat = 0;
         let numLon = 0;
