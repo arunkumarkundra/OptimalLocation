@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimal Location Finder</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .input-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .input-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .destination-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .destination-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .destination-inputs {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .destination-inputs input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .destination-inputs input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .weight-input {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e74c3c;
+            color: white;
+            font-size: 0.8rem;
+            padding: 8px 16px;
+        }
+
+        .btn-secondary:hover {
+            background: #c0392b;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+            width: 100%;
+            margin: 20px 0;
+            font-size: 1rem;
+            padding: 15px;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(39, 174, 96, 0.3);
+        }
+
+        #map {
+            height: 600px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 3px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .results-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .results-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .result-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-size: 0.9rem;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .control-group input, .control-group select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .destination-inputs {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 Optimal Location Finder</h1>
+            <p>Find the perfect place to live based on your frequent destinations. Enter locations you visit regularly with their importance weights.</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2>📍 Destinations</h2>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <label>Grid Spacing</label>
+                        <select id="gridSpacing">
+                            <option value="0.01">Coarse (0.01°)</option>
+                            <option value="0.005" selected>Standard (0.005°)</option>
+                            <option value="0.002">Fine (0.002°)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Buffer Size</label>
+                        <select id="bufferSize">
+                            <option value="0.03">Small (0.03°)</option>
+                            <option value="0.05" selected>Standard (0.05°)</option>
+                            <option value="0.08">Large (0.08°)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="destinationsContainer">
+                    <div class="destination-item">
+                        <div class="destination-inputs">
+                            <input type="text" placeholder="Address or Location" class="location-input">
+                            <input type="text" placeholder="Name (optional)" class="name-input">
+                            <input type="number" min="0.1" step="0.1" value="1.0" class="weight-input" placeholder="Weight">
+                        </div>
+                        <button class="btn btn-secondary remove-destination">Remove</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="addDestination()">+ Add Destination</button>
+                <button class="btn btn-success" onclick="findOptimalLocation()">🎯 Find Optimal Location</button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    Calculating optimal location...
+                </div>
+
+                <div class="results-section" id="results" style="display: none;">
+                    <h3>📊 Results</h3>
+                    <div id="resultsContent"></div>
+                    <button class="btn btn-primary" onclick="exportResults()">📄 Export Results</button>
+                </div>
+            </div>
+
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script>
+        let map;
+        let destinations = [];
+        let gridPoints = [];
+        let optimalLocation = null;
+        let layerGroups = {
+            destinations: L.layerGroup(),
+            grid: L.layerGroup(),
+            optimal: L.layerGroup()
+        };
+
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([40.7128, -74.0060], 10);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add layer groups to map
+            Object.values(layerGroups).forEach(layer => layer.addTo(map));
+        }
+
+        // Haversine distance calculation
+        function haversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Earth's radius in kilometers
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                    Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // Geocoding using Nominatim
+        async function geocode(address) {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    return {
+                        lat: parseFloat(data[0].lat),
+                        lon: parseFloat(data[0].lon),
+                        display_name: data[0].display_name
+                    };
+                }
+                throw new Error('Location not found');
+            } catch (error) {
+                console.error('Geocoding error:', error);
+                throw error;
+            }
+        }
+
+        // Add destination input
+        function addDestination() {
+            const container = document.getElementById('destinationsContainer');
+            const destinationItem = document.createElement('div');
+            destinationItem.className = 'destination-item';
+            destinationItem.innerHTML = `
+                <div class="destination-inputs">
+                    <input type="text" placeholder="Address or Location" class="location-input">
+                    <input type="text" placeholder="Name (optional)" class="name-input">
+                    <input type="number" min="0.1" step="0.1" value="1.0" class="weight-input" placeholder="Weight">
+                </div>
+                <button class="btn btn-secondary remove-destination" onclick="removeDestination(this)">Remove</button>
+            `;
+            container.appendChild(destinationItem);
+        }
+
+        // Remove destination input
+        function removeDestination(button) {
+            const container = document.getElementById('destinationsContainer');
+            if (container.children.length > 1) {
+                button.parentElement.remove();
+            }
+        }
+
+        // Get color based on weighted distance (green = better, red = worse)
+        function getColorForDistance(distance, minDist, maxDist) {
+            const normalized = (distance - minDist) / (maxDist - minDist);
+            const hue = (1 - normalized) * 120; // 120 = green, 0 = red
+            return `hsl(${hue}, 70%, 50%)`;
+        }
+
+        // Main function to find optimal location
+        async function findOptimalLocation() {
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('results').style.display = 'none';
+            
+            try {
+                // Clear previous results
+                Object.values(layerGroups).forEach(layer => layer.clearLayers());
+                
+                // Collect destinations
+                destinations = [];
+                const destinationItems = document.querySelectorAll('.destination-item');
+                
+                for (let item of destinationItems) {
+                    const location = item.querySelector('.location-input').value.trim();
+                    const name = item.querySelector('.name-input').value.trim() || location;
+                    const weight = parseFloat(item.querySelector('.weight-input').value) || 1.0;
+                    
+                    if (location) {
+                        try {
+                            const coords = await geocode(location);
+                            destinations.push({
+                                name: name,
+                                location: location,
+                                lat: coords.lat,
+                                lon: coords.lon,
+                                weight: weight,
+                                display_name: coords.display_name
+                            });
+                        } catch (error) {
+                            alert(`Could not find location: ${location}`);
+                            continue;
+                        }
+                    }
+                }
+
+                if (destinations.length < 1) {
+                    alert('Please add at least one valid destination');
+                    return;
+                }
+
+                // Calculate bounding box
+                const lats = destinations.map(d => d.lat);
+                const lons = destinations.map(d => d.lon);
+                const buffer = parseFloat(document.getElementById('bufferSize').value);
+                
+                const bounds = {
+                    minLat: Math.min(...lats) - buffer,
+                    maxLat: Math.max(...lats) + buffer,
+                    minLon: Math.min(...lons) - buffer,
+                    maxLon: Math.max(...lons) + buffer
+                };
+
+                // Generate grid
+                const gridSpacing = parseFloat(document.getElementById('gridSpacing').value);
+                gridPoints = [];
+                
+                for (let lat = bounds.minLat; lat <= bounds.maxLat; lat += gridSpacing) {
+                    for (let lon = bounds.minLon; lon <= bounds.maxLon; lon += gridSpacing) {
+                        let weightedDistance = 0;
+                        let totalWeight = 0;
+                        
+                        for (let dest of destinations) {
+                            const distance = haversineDistance(lat, lon, dest.lat, dest.lon);
+                            weightedDistance += distance * dest.weight;
+                            totalWeight += dest.weight;
+                        }
+                        
+                        const avgWeightedDistance = weightedDistance / totalWeight;
+                        
+                        gridPoints.push({
+                            lat: lat,
+                            lon: lon,
+                            avgWeightedDistance: avgWeightedDistance
+                        });
+                    }
+                }
+
+                // Find optimal point
+                optimalLocation = gridPoints.reduce((best, current) => 
+                    current.avgWeightedDistance < best.avgWeightedDistance ? current : best
+                );
+
+                // Visualize results
+                await visualizeResults();
+                displayResults();
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while calculating the optimal location');
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+            }
+        }
+
+        // Visualize results on map
+        async function visualizeResults() {
+            // Add destinations
+            destinations.forEach((dest, index) => {
+                const marker = L.marker([dest.lat, dest.lon], {
+                    icon: L.divIcon({
+                        html: `<div style="background: #e74c3c; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">${index + 1}</div>`,
+                        iconSize: [30, 30],
+                        className: 'custom-marker'
+                    })
+                }).bindPopup(`
+                    <strong>${dest.name}</strong><br>
+                    Weight: ${dest.weight}<br>
+                    <small>${dest.display_name}</small>
+                `);
+                layerGroups.destinations.addLayer(marker);
+            });
+
+            // Add grid points with color coding
+            const distances = gridPoints.map(p => p.avgWeightedDistance);
+            const minDist = Math.min(...distances);
+            const maxDist = Math.max(...distances);
+
+            // Sample grid points for visualization (to avoid too many markers)
+            const sampleSize = Math.min(gridPoints.length, 1000);
+            const sampleStep = Math.floor(gridPoints.length / sampleSize);
+            
+            for (let i = 0; i < gridPoints.length; i += sampleStep) {
+                const point = gridPoints[i];
+                const color = getColorForDistance(point.avgWeightedDistance, minDist, maxDist);
+                
+                const circle = L.circleMarker([point.lat, point.lon], {
+                    radius: 3,
+                    fillColor: color,
+                    color: color,
+                    weight: 1,
+                    opacity: 0.6,
+                    fillOpacity: 0.4
+                }).bindPopup(`
+                    Weighted Distance: ${point.avgWeightedDistance.toFixed(2)} km
+                `);
+                layerGroups.grid.addLayer(circle);
+            }
+
+            // Add optimal location
+            const optimalMarker = L.marker([optimalLocation.lat, optimalLocation.lon], {
+                icon: L.divIcon({
+                    html: `<div style="background: #27ae60; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 4px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.4); font-size: 18px;">★</div>`,
+                    iconSize: [40, 40],
+                    className: 'optimal-marker'
+                })
+            }).bindPopup(`
+                <strong>🏠 Optimal Location</strong><br>
+                Avg Weighted Distance: ${optimalLocation.avgWeightedDistance.toFixed(2)} km<br>
+                Coordinates: ${optimalLocation.lat.toFixed(6)}, ${optimalLocation.lon.toFixed(6)}
+            `);
+            layerGroups.optimal.addLayer(optimalMarker);
+
+            // Fit map to show all points
+            const allPoints = [...destinations.map(d => [d.lat, d.lon]), [optimalLocation.lat, optimalLocation.lon]];
+            map.fitBounds(allPoints, { padding: [20, 20] });
+        }
+
+        // Display results
+        function displayResults() {
+            const resultsContent = document.getElementById('resultsContent');
+            
+            let html = `
+                <div class="result-item">
+                    <strong>🎯 Optimal Location</strong><br>
+                    Coordinates: ${optimalLocation.lat.toFixed(6)}, ${optimalLocation.lon.toFixed(6)}<br>
+                    Average Weighted Distance: ${optimalLocation.avgWeightedDistance.toFixed(2)} km
+                </div>
+            `;
+
+            destinations.forEach((dest, index) => {
+                const distance = haversineDistance(optimalLocation.lat, optimalLocation.lon, dest.lat, dest.lon);
+                html += `
+                    <div class="result-item">
+                        <strong>${index + 1}. ${dest.name}</strong><br>
+                        Distance from optimal: ${distance.toFixed(2)} km<br>
+                        Weight: ${dest.weight}<br>
+                        Weighted contribution: ${(distance * dest.weight).toFixed(2)} km·weight
+                    </div>
+                `;
+            });
+
+            html += `
+                <div class="result-item">
+                    <strong>📊 Analysis Summary</strong><br>
+                    Total destinations: ${destinations.length}<br>
+                    Grid points evaluated: ${gridPoints.length.toLocaleString()}<br>
+                    Grid spacing: ${document.getElementById('gridSpacing').value}°<br>
+                    Buffer size: ${document.getElementById('bufferSize').value}°
+                </div>
+            `;
+
+            resultsContent.innerHTML = html;
+            document.getElementById('results').style.display = 'block';
+        }
+
+        // Export results to CSV
+        function exportResults() {
+            if (!optimalLocation || destinations.length === 0) {
+                alert('No results to export');
+                return;
+            }
+
+            let csv = 'Type,Name,Latitude,Longitude,Weight,Distance_from_Optimal,Weighted_Distance\n';
+            
+            // Add optimal location
+            csv += `Optimal,Optimal Location,${optimalLocation.lat},${optimalLocation.lon},N/A,0,${optimalLocation.avgWeightedDistance}\n`;
+            
+            // Add destinations
+            destinations.forEach(dest => {
+                const distance = haversineDistance(optimalLocation.lat, optimalLocation.lon, dest.lat, dest.lon);
+                csv += `Destination,"${dest.name}",${dest.lat},${dest.lon},${dest.weight},${distance},${distance * dest.weight}\n`;
+            });
+
+            // Download file
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'optimal_location_results.csv';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        // Initialize the app
+        window.onload = function() {
+            initMap();
+        };
+    </script>
+</body>
+</html>
