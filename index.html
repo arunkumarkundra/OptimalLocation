@@ -497,8 +497,8 @@ function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 200, tol
                 // The singular destination is NOT the optimal point, but the algorithm is stuck.
                 // Perturb the point slightly to move away and continue.
                 // This is a heuristic to escape the singularity.
-                x += (Math.random() - 0.5) * tolerance * 1000; // Small random perturbation
-                y += (Math.random() - 0.5) * tolerance * 1000; // Small random perturbation
+                x += (Math.random() - 0.5) * tolerance * 10; // Small random perturbation
+                y += (Math.random() - 0.5) * tolerance * 10; // Small random perturbation
                 continue; // Continue with the next iteration from the perturbed point
             }
         }
