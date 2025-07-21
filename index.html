@@ -387,6 +387,23 @@
             Object.values(layerGroups).forEach(layer => layer.addTo(map));
         }
 
+function parseCSVLine(line) {
+    const pattern = /("([^"]|"")*"|[^,]*)(,|$)/g;
+    const values = [];
+    let match;
+
+    while ((match = pattern.exec(line)) !== null) {
+        let value = match[1].trim();
+        if (value.startsWith('"') && value.endsWith('"')) {
+            value = value.slice(1, -1).replace(/""/g, '"');
+        }
+        values.push(value);
+    }
+
+    return values;
+}
+
+        
 function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100, tolerance = 1e-6) {
     // Start from weighted centroid
     let x = 0, y = 0, totalWeight = 0;
@@ -966,7 +983,9 @@ function importResults(event) {
         const destinationsToLoad = [];
 
         for (let i = 1; i < lines.length; i++) {
-            const [type, name, lat, lon, weight, , ] = lines[i].split(',');
+            const cols = parseCSVLine(lines[i]);
+            const type = cols[0], name = cols[1], lat = parseFloat(cols[2]), lon = parseFloat(cols[3]), weight = parseFloat(cols[4]);
+
             if (type.trim() === "Destination") {
                 destinationsToLoad.push({
                     name: name.replace(/^"|"$/g, ''),
