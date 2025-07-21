@@ -433,7 +433,8 @@
         }
 
         // Add destination input
-function addDestination() {
+
+ function addDestination() {
     const container = document.getElementById('destinationsContainer');
     const destinationItem = document.createElement('div');
     const letter = getDestinationLetter(container.children.length);
@@ -449,7 +450,7 @@ function addDestination() {
             <input type="number" min="0.1" step="0.1" value="1.0" class="weight-input" placeholder="Weight">
         </div>
         <div class="destination-label">Destination: <span class="dest-letter">${letter}</span></div>
-        <button class="btn btn-secondary remove-destination" onclick="removeDestination(this)">Remove</button>
+        <button class="btn btn-secondary remove-destination">Remove</button>
     `;
     
     container.appendChild(destinationItem);
@@ -458,8 +459,13 @@ function addDestination() {
     const input = destinationItem.querySelector('.location-input');
     const dropdown = destinationItem.querySelector('.autocomplete-dropdown');
     setupAutocomplete(input, dropdown);
+    
+    // Setup remove button event
+    const removeButton = destinationItem.querySelector('.remove-destination');
+    removeButton.addEventListener('click', function() {
+        removeDestination(this);
+    });
 }
-
 // Get letter for destination (A, B, C...)
 function getDestinationLetter(index) {
     return String.fromCharCode(65 + index); // A=65, B=66, etc.
@@ -512,18 +518,32 @@ function setupAutocomplete(input, dropdown) {
             }
         }, 300);
     });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
 }
 
+        
 // Show coordinate option in dropdown
 function showCoordinateOption(dropdown, coords, originalQuery) {
     dropdown.innerHTML = `
-        <div class="autocomplete-option" onclick="selectCoordinate('${coords.lat}', '${coords.lon}', '${originalQuery}', this)">
+        <div class="autocomplete-option" data-lat="${coords.lat}" data-lon="${coords.lon}" data-name="${originalQuery}">
             📍 Coordinates: ${coords.lat}, ${coords.lon}
         </div>
     `;
     dropdown.style.display = 'block';
+    
+    // Add click event listener
+    dropdown.querySelector('.autocomplete-option').addEventListener('click', function() {
+        selectLocation(coords.lat, coords.lon, originalQuery, this);
+    });
 }
 
+        
 // Show autocomplete options
 function showAutocompleteOptions(dropdown, results, input) {
     if (results.length === 0) {
@@ -532,14 +552,25 @@ function showAutocompleteOptions(dropdown, results, input) {
     }
     
     dropdown.innerHTML = results.map(result => `
-        <div class="autocomplete-option" onclick="selectLocation('${result.lat}', '${result.lon}', '${result.display_name.replace(/'/g, "\\'")}', this)">
+        <div class="autocomplete-option" data-lat="${result.lat}" data-lon="${result.lon}" data-name="${result.display_name}">
             📍 ${result.display_name}
         </div>
     `).join('');
     
     dropdown.style.display = 'block';
+    
+    // Add click event listeners
+    dropdown.querySelectorAll('.autocomplete-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const lat = this.getAttribute('data-lat');
+            const lon = this.getAttribute('data-lon');
+            const name = this.getAttribute('data-name');
+            selectLocation(lat, lon, name, this);
+        });
+    });
 }
 
+        
 // Select coordinate from dropdown
 function selectCoordinate(lat, lon, query, element) {
     const input = element.closest('.destination-item').querySelector('.location-input');
@@ -550,12 +581,15 @@ function selectCoordinate(lat, lon, query, element) {
 
 // Select location from dropdown
 function selectLocation(lat, lon, displayName, element) {
-    const input = element.closest('.destination-item').querySelector('.location-input');
-    input.value = displayName.substring(0, 50) + (displayName.length > 50 ? '...' : '');
-    element.closest('.autocomplete-dropdown').style.display = 'none';
-    previewDestination(element.closest('.destination-item'), parseFloat(lat), parseFloat(lon), displayName);
+    const destinationItem = element.closest('.destination-item');
+    const input = destinationItem.querySelector('.location-input');
+    const dropdown = destinationItem.querySelector('.autocomplete-dropdown');
+    
+    input.value = displayName.length > 50 ? displayName.substring(0, 50) + '...' : displayName;
+    dropdown.style.display = 'none';
+    previewDestination(destinationItem, parseFloat(lat), parseFloat(lon), displayName);
 }
-
+        
 // Preview destination on map
 function previewDestination(destinationItem, lat, lon, displayName) {
     const destIndex = Array.from(destinationItem.parentElement.children).indexOf(destinationItem);
@@ -826,6 +860,7 @@ function previewDestination(destinationItem, lat, lon, displayName) {
         }
 
         // Initialize the app
+
 window.onload = function() {
     initMap();
     
@@ -833,7 +868,14 @@ window.onload = function() {
     const initialInput = document.querySelector('.location-input');
     const initialDropdown = document.querySelector('.autocomplete-dropdown');
     setupAutocomplete(initialInput, initialDropdown);
+    
+    // Setup initial remove button
+    const initialRemoveButton = document.querySelector('.remove-destination');
+    initialRemoveButton.addEventListener('click', function() {
+        removeDestination(this);
+    });
 };
+        
     </script>
 </body>
 </html>
