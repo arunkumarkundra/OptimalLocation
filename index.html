@@ -942,6 +942,80 @@ optimalLocation = result;
             document.body.removeChild(a);
         }
 
+function importResults(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const lines = e.target.result.split(/\r?\n/).filter(line => line.trim() !== '');
+        const headers = lines[0].split(',');
+
+        if (!headers.includes('Type') || !headers.includes('Latitude') || !headers.includes('Longitude')) {
+            alert("Invalid CSV format.");
+            return;
+        }
+
+        // Clear current UI
+        document.getElementById('destinationsContainer').innerHTML = '';
+
+        const destinationsToLoad = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const [type, name, lat, lon, weight, , ] = lines[i].split(',');
+            if (type.trim() === "Destination") {
+                destinationsToLoad.push({
+                    name: name.replace(/^"|"$/g, ''),
+                    lat: parseFloat(lat),
+                    lon: parseFloat(lon),
+                    weight: parseFloat(weight)
+                });
+            }
+        }
+
+        // Rebuild the UI
+        for (const dest of destinationsToLoad) {
+            const container = document.getElementById('destinationsContainer');
+            const destinationItem = document.createElement('div');
+            destinationItem.className = 'destination-item';
+
+            const letter = getDestinationLetter(container.children.length);
+
+            destinationItem.innerHTML = `
+                <div class="destination-inputs">
+                    <div class="autocomplete-container">
+                        <input type="text" class="location-input" value="${dest.name}" data-lat="${dest.lat}" data-lon="${dest.lon}" data-display-name="${dest.name}">
+                        <div class="autocomplete-dropdown" style="display: none;"></div>
+                    </div>
+                    <input type="text" class="name-input" value="${dest.name}">
+                    <input type="number" class="weight-input" value="${dest.weight}" min="0.1" step="0.1">
+                </div>
+                <div class="destination-label">Destination: <span class="dest-letter">${letter}</span></div>
+                <button class="btn btn-secondary remove-destination">Remove</button>
+            `;
+
+            container.appendChild(destinationItem);
+
+            const input = destinationItem.querySelector('.location-input');
+            const dropdown = destinationItem.querySelector('.autocomplete-dropdown');
+            setupAutocomplete(input, dropdown);
+
+            destinationItem.querySelector('.remove-destination').addEventListener('click', function () {
+                removeDestination(this);
+            });
+
+            // Force preview marker
+            previewDestination(destinationItem, dest.lat, dest.lon, dest.name);
+        }
+
+        updateAllDestinationMarkers();
+    };
+
+    reader.readAsText(file);
+}
+
+
+        
         // Initialize the app
 
 window.onload = function() {
