@@ -694,7 +694,8 @@ function previewDestination(destinationItem, lat, lon, displayName) {
 
         // Visualize results on map
         async function visualizeResults() {
-            // Add destinationsdestinations.forEach((dest, index) => {
+            // Add destinations
+            destinations.forEach((dest, index) => {
     const letter = getDestinationLetter(index);
     const marker = L.marker([dest.lat, dest.lon], {
         icon: L.divIcon({
