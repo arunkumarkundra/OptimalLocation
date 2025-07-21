@@ -369,6 +369,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <script>
         let map;
+let userCurrentLat = 12.9716; // Default to Bangalore, India (your current location)
+let userCurrentLon = 77.5946; // Default to Bangalore, India (your current location)
+        
         let destinations = [];
         let gridPoints = [];
         let optimalLocation = null;
@@ -381,16 +384,43 @@
         let geocodeTimeouts = {};
         
         // Initialize map
-        function initMap() {
-            map = L.map('map').setView([40.7128, -74.0060], 10);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
 
-            // Add layer groups to map
-            Object.values(layerGroups).forEach(layer => layer.addTo(map));
-        }
+function initMap() {
+    map = L.map('map').setView([userCurrentLat, userCurrentLon], 10); // Use default/user location
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
+    // Add layer groups to map
+    Object.values(layerGroups).forEach(layer => layer.addTo(map));
+
+    // Attempt to get user's current location
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                userCurrentLat = position.coords.latitude;
+                userCurrentLon = position.coords.longitude;
+                map.setView([userCurrentLat, userCurrentLon], 13); // Set view to user's location with a closer zoom
+                L.marker([userCurrentLat, userCurrentLon], {
+                    icon: L.divIcon({
+                        html: `<div style="background: #3498db; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">🏠</div>`,
+                        iconSize: [30, 30],
+                        className: 'current-location-marker'
+                    })
+                }).addTo(map).bindPopup('Your Current Location');
+            },
+            (error) => {
+                console.warn('Geolocation error:', error);
+//                alert('Could not retrieve your location. Map will default to Bangalore for initial view and search bias.');
+            },
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+    } else {
+//        alert('Geolocation is not supported by your browser. Map will default to Bangalore for initial view and search bias.');
+    }
+}
+
+        
 
         
 function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100, tolerance = 1e-6) {
@@ -453,18 +483,19 @@ function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100, tol
 
         // Geocoding using Nominatim
 
- async function geocode(address, biasLat = null, biasLon = null) {
+async function geocode(address, biasLat = null, biasLon = null) {
     try {
         let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1`;
-        
-        // Add geographic bias if available
+
+        // Prioritize passed bias, then user's current location, then default (Bangalore)
         if (biasLat && biasLon) {
             url += `&lat=${biasLat}&lon=${biasLon}&radius=50000`; // 50km radius
+        } else if (userCurrentLat && userCurrentLon) { // Use user's current location if available (even if it's the default Bangalore)
+            url += `&lat=${userCurrentLat}&lon=${userCurrentLon}&radius=100000`; // 100km radius around user/default
         } else {
-            // Default bias to Bangalore area
-            url += `&lat=12.9716&lon=77.5946&radius=100000`; // 100km radius around Bangalore
+            url += `&lat=12.9716&lon=77.5946&radius=100000`; // Fallback to Bangalore if all else fails (shouldn't be hit with global defaults)
         }
-        
+
         const response = await fetch(url);
         const data = await response.json();
         if (data && data.length > 0) {
@@ -546,41 +577,56 @@ function parseCoordinates(input) {
 // Setup autocomplete for location input
 function setupAutocomplete(input, dropdown) {
     let currentRequest = null;
-    
+
     input.addEventListener('input', function() {
         const query = this.value.trim();
         dropdown.style.display = 'none';
-        
+
         if (query.length < 3) return;
-        
+
         // Check if it's coordinates
         const coords = parseCoordinates(query);
         if (coords) {
             showCoordinateOption(dropdown, coords, query);
             return;
         }
-        
+
         // Cancel previous request
         if (currentRequest) {
             clearTimeout(currentRequest);
         }
-        
+
         // Debounce API calls
         currentRequest = setTimeout(async () => {
             try {
-let searchUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8&addressdetails=1`;
-// Add geographic bias based on existing destinations or default to Bangalore
-const existingDestinations = destinations.filter(d => d.lat && d.lon);
-if (existingDestinations.length > 0) {
-    const avgLat = existingDestinations.reduce((sum, d) => sum + d.lat, 0) / existingDestinations.length;
-    const avgLon = existingDestinations.reduce((sum, d) => sum + d.lon, 0) / existingDestinations.length;
-    searchUrl += `&lat=${avgLat}&lon=${avgLon}&radius=50000`;
-} else {
-    searchUrl += `&lat=12.9716&lon=77.5946&radius=100000`; // Bangalore bias
-}
+                let searchUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8&addressdetails=1`;
 
-const response = await fetch(searchUrl);
-    
+                let biasLat = userCurrentLat; // Start with user's current location as primary bias
+                let biasLon = userCurrentLon;
+
+                // Get the index of the current destination item
+                const destinationItem = input.closest('.destination-item');
+                const currentIndex = Array.from(destinationItem.parentElement.children).indexOf(destinationItem);
+
+                // For subsequent destinations (not the first one), use the previous destination as bias
+                if (currentIndex > 0) {
+                    const prevItem = destinationItem.previousElementSibling;
+                    const prevInput = prevItem ? prevItem.querySelector('.location-input') : null;
+                    if (prevInput && prevInput.getAttribute('data-lat') && prevInput.getAttribute('data-lon')) {
+                        biasLat = parseFloat(prevInput.getAttribute('data-lat'));
+                        biasLon = parseFloat(prevInput.getAttribute('data-lon'));
+                    }
+                }
+
+                // Apply bias if coordinates are valid
+                if (biasLat && biasLon) {
+                    searchUrl += `&lat=${biasLat}&lon=${biasLon}&radius=100000`; // 100km radius around bias point
+                } else {
+                    // Fallback to Bangalore if no user location or previous destination is available/valid
+                    searchUrl += `&lat=12.9716&lon=77.5946&radius=100000`;
+                }
+
+                const response = await fetch(searchUrl);
                 const results = await response.json();
                 showAutocompleteOptions(dropdown, results, input);
             } catch (error) {
@@ -596,7 +642,6 @@ const response = await fetch(searchUrl);
         }
     });
 }
-
         
 // Show coordinate option in dropdown
 function showCoordinateOption(dropdown, coords, originalQuery) {
