@@ -657,12 +657,29 @@ function previewDestination(destinationItem, lat, lon, displayName) {
 }
         
         // Remove destination input
-        function removeDestination(button) {
-            const container = document.getElementById('destinationsContainer');
-            if (container.children.length > 1) {
-                button.parentElement.remove();
+
+
+function removeDestination(button) {
+    const container = document.getElementById('destinationsContainer');
+    if (container.children.length > 1) {
+        button.parentElement.remove();
+
+        // Re-label destinations and update preview
+        const items = container.querySelectorAll('.destination-item');
+        items.forEach((item, index) => {
+            item.querySelector('.dest-letter').textContent = getDestinationLetter(index);
+            const locationInput = item.querySelector('.location-input');
+            const lat = parseFloat(locationInput.getAttribute('data-lat'));
+            const lon = parseFloat(locationInput.getAttribute('data-lon'));
+            const displayName = locationInput.getAttribute('data-display-name');
+            if (lat && lon && displayName) {
+                previewDestination(item, lat, lon, displayName);
             }
-        }
+        });
+    }
+}
+
+        
 
         // Get color based on weighted distance (green = better, red = worse)
         function getColorForDistance(distance, minDist, maxDist) {
