@@ -391,21 +391,6 @@
             Object.values(layerGroups).forEach(layer => layer.addTo(map));
         }
 
-function parseCSVLine(line) {
-    const pattern = /("([^"]|"")*"|[^,]*)(,|$)/g;
-    const values = [];
-    let match;
-
-    while ((match = pattern.exec(line)) !== null) {
-        let value = match[1].trim();
-        if (value.startsWith('"') && value.endsWith('"')) {
-            value = value.slice(1, -1).replace(/""/g, '"');
-        }
-        values.push(value);
-    }
-
-    return values;
-}
 
         
 function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100, tolerance = 1e-6) {
@@ -943,30 +928,42 @@ optimalLocation = result;
                 return;
             }
 
-            let csv = 'Type,Name,Latitude,Longitude,Weight,Distance_from_Optimal,Weighted_Distance\n';
-            
-            // Add optimal location
-            csv += `Optimal,Optimal Location,${optimalLocation.lat},${optimalLocation.lon},N/A,0,${optimalLocation.avgWeightedDistance}\n`;
-            
-            // Add destinations
-            destinations.forEach(dest => {
-                const distance = haversineDistance(optimalLocation.lat, optimalLocation.lon, dest.lat, dest.lon);
-                csv += `Destination,"${dest.name}",${dest.lat},${dest.lon},${dest.weight},${distance},${distance * dest.weight}\n`;
-            });
+const dataToExport = {
+    optimalLocation: {
+        lat: optimalLocation.lat,
+        lon: optimalLocation.lon,
+        avgWeightedDistance: optimalLocation.avgWeightedDistance
+    },
+    destinations: destinations.map(dest => ({
+        name: dest.name,
+        location: dest.location,
+        lat: dest.lat,
+        lon: dest.lon,
+        weight: dest.weight,
+        displayName: dest.display_name // Use display_name for clarity
+    }))
+};
 
+const json = JSON.stringify(dataToExport, null, 2); // null, 2 for pretty printing
+
+
+            
             // Download file
-            const blob = new Blob([csv], { type: 'text/csv' });
+            const blob = new Blob([json], { type: 'application/json' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
 const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-a.download = `optimal_location_results_${timestamp}.csv`;
+            a.download = `optimal_location_results_${timestamp}.json`;
+            
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         }
+
+
 
 function importResults(event) {
     const file = event.target.files[0];
@@ -974,73 +971,89 @@ function importResults(event) {
 
     const reader = new FileReader();
     reader.onload = function(e) {
-        const lines = e.target.result.split(/\r?\n/).filter(line => line.trim() !== '');
-        const headers = lines[0].split(',');
+        try {
+            const importedData = JSON.parse(e.target.result);
 
-        if (!headers.includes('Type') || !headers.includes('Latitude') || !headers.includes('Longitude')) {
-            alert("Invalid CSV format.");
-            return;
-        }
-
-        // Clear current UI
-        document.getElementById('destinationsContainer').innerHTML = '';
-
-        const destinationsToLoad = [];
-
-        for (let i = 1; i < lines.length; i++) {
-            const cols = parseCSVLine(lines[i]);
-            const type = cols[0], name = cols[1], lat = parseFloat(cols[2]), lon = parseFloat(cols[3]), weight = parseFloat(cols[4]);
-
-            if (type.trim() === "Destination") {
-                destinationsToLoad.push({
-                    name: name.replace(/^"|"$/g, ''),
-                    lat: parseFloat(lat),
-                    lon: parseFloat(lon),
-                    weight: parseFloat(weight)
-                });
+            // Basic validation: Check if required top-level keys exist
+            if (!importedData.destinations || !Array.isArray(importedData.destinations)) {
+                alert("Invalid JSON file: Missing or malformed 'destinations' array.");
+                return; // Stop if data is invalid
             }
-        }
 
-        // Rebuild the UI
-        for (const dest of destinationsToLoad) {
-            const container = document.getElementById('destinationsContainer');
-            const destinationItem = document.createElement('div');
-            destinationItem.className = 'destination-item';
-
-            const letter = getDestinationLetter(container.children.length);
-
-            destinationItem.innerHTML = `
-                <div class="destination-inputs">
-                    <div class="autocomplete-container">
-                        <input type="text" class="location-input" value="${dest.name}" data-lat="${dest.lat}" data-lon="${dest.lon}" data-display-name="${dest.name}">
-                        <div class="autocomplete-dropdown" style="display: none;"></div>
-                    </div>
-                    <input type="text" class="name-input" value="${dest.name}">
-                    <input type="number" class="weight-input" value="${dest.weight}" min="0.1" step="0.1">
-                </div>
-                <div class="destination-label">Destination: <span class="dest-letter">${letter}</span></div>
-                <button class="btn btn-secondary remove-destination">Remove</button>
-            `;
-
-            container.appendChild(destinationItem);
-
-            const input = destinationItem.querySelector('.location-input');
-            const dropdown = destinationItem.querySelector('.autocomplete-dropdown');
-            setupAutocomplete(input, dropdown);
-
-            destinationItem.querySelector('.remove-destination').addEventListener('click', function () {
-                removeDestination(this);
+            // Further validate each destination object
+            const validDestinations = importedData.destinations.filter(dest => {
+                return typeof dest.name === 'string' &&
+                       typeof dest.lat === 'number' && !isNaN(dest.lat) &&
+                       typeof dest.lon === 'number' && !isNaN(dest.lon) &&
+                       typeof dest.weight === 'number' && !isNaN(dest.weight);
             });
 
-            // Force preview marker
-            previewDestination(destinationItem, dest.lat, dest.lon, dest.name);
-        }
+            if (validDestinations.length === 0) {
+                alert("No valid destinations found in the imported file. UI will not be updated.");
+                return; // Stop if no valid destinations
+            }
 
-        updateAllDestinationMarkers();
+            // If data is valid, clear current UI and populate
+            document.getElementById('destinationsContainer').innerHTML = ''; // Clear existing inputs
+            layerGroups.destinations.clearLayers(); // Clear existing markers
+
+            // Add destinations to UI and map
+            validDestinations.forEach(dest => {
+                const container = document.getElementById('destinationsContainer');
+                const destinationItem = document.createElement('div');
+                destinationItem.className = 'destination-item';
+
+                const letter = getDestinationLetter(container.children.length);
+
+                // Ensure display_name is populated, fallback to name
+                const displayName = dest.displayName || dest.name;
+
+                destinationItem.innerHTML = `
+                    <div class="destination-inputs">
+                        <div class="autocomplete-container">
+                            <input type="text" class="location-input" value="${displayName}" data-lat="${dest.lat}" data-lon="${dest.lon}" data-display-name="${displayName}">
+                            <div class="autocomplete-dropdown" style="display: none;"></div>
+                        </div>
+                        <input type="text" class="name-input" value="${dest.name}">
+                        <input type="number" class="weight-input" value="${dest.weight}" min="0.1" step="0.1">
+                    </div>
+                    <div class="destination-label">Destination: <span class="dest-letter">${letter}</span></div>
+                    <button class="btn btn-secondary remove-destination">Remove</button>
+                `;
+
+                container.appendChild(destinationItem);
+
+                // Re-attach autocomplete and remove event listeners
+                const input = destinationItem.querySelector('.location-input');
+                const dropdown = destinationItem.querySelector('.autocomplete-dropdown');
+                setupAutocomplete(input, dropdown);
+
+                destinationItem.querySelector('.remove-destination').addEventListener('click', function () {
+                    removeDestination(this);
+                });
+
+                // Plot on map immediately
+                previewDestination(destinationItem, dest.lat, dest.lon, displayName);
+            });
+
+            // Re-center map to fit imported destinations if desired (optional)
+            if (validDestinations.length > 0) {
+                const bounds = L.latLngBounds(validDestinations.map(d => [d.lat, d.lon]));
+                map.fitBounds(bounds, { padding: [20, 20] });
+            }
+
+            alert('Destinations imported successfully!');
+
+        } catch (error) {
+            console.error('Error importing JSON file:', error);
+            alert("Could not parse the imported file. Please ensure it is a valid JSON format.");
+            // No changes made to UI if parsing fails
+        }
     };
 
     reader.readAsText(file);
 }
+
 
 
         
