@@ -421,7 +421,6 @@ function initMap() {
     }
 }
 
-        
 function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, tolerance = 1e-7) {
     if (destinations.length === 0) {
         return null;
@@ -431,6 +430,7 @@ function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, 
     }
 
     let totalWeight = destinations.reduce((sum, dest) => sum + dest.weight, 0);
+    // Initialize with weighted average or any reasonable starting point
     let x = destinations.reduce((sum, dest) => sum + dest.lon * dest.weight, 0) / totalWeight;
     let y = destinations.reduce((sum, dest) => sum + dest.lat * dest.weight, 0) / totalWeight;
 
@@ -439,18 +439,16 @@ function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, 
         let numLon = 0;
         let denom = 0;
         let atSingularPoint = false;
-        let singularDestIndex = -1; // To identify which destination is causing singularity
+        let singularDestIndex = -1;
 
         for (let i = 0; i < destinations.length; i++) {
             const dest = destinations[i];
             const dist = haversineDistance(y, x, dest.lat, dest.lon);
 
-            if (dist < tolerance) {
-                // Current point is effectively on this destination.
-                // This is a singularity.
+            if (dist < tolerance) { // Check for singularity
                 atSingularPoint = true;
                 singularDestIndex = i;
-                break; // Exit inner loop to handle this special case
+                break;
             }
 
             const wOverDist = dest.weight / dist;
@@ -460,49 +458,46 @@ function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, 
         }
 
         if (atSingularPoint) {
-            // Handle singularity: Check if the current singular destination IS the optimal point.
-            // This is a simplified check based on the subgradient condition.
-            // If the sum of weights of other points pulling away from this singular point
-            // is less than or equal to the weight of the singular point itself,
-            // then this point IS the optimal solution.
-            
-            let pullVectorX = 0;
-            let pullVectorY = 0;
+            // Subgradient condition check for the singular point
             const singularDest = destinations[singularDestIndex];
+            let subgradientX = 0;
+            let subgradientY = 0;
 
             for (let i = 0; i < destinations.length; i++) {
                 if (i === singularDestIndex) continue; // Skip the singular point itself
                 const otherDest = destinations[i];
                 const distToOther = haversineDistance(singularDest.lat, singularDest.lon, otherDest.lat, otherDest.lon);
-                if (distToOther > tolerance) { // Avoid division by zero if another point is also "at" the singularity
-                    pullVectorY += otherDest.weight * (otherDest.lat - singularDest.lat) / distToOther;
-                    pullVectorX += otherDest.weight * (otherDest.lon - singularDest.lon) / distToOther;
+                
+                // If another point is also very close to the singular point, its contribution becomes undefined.
+                // In practice, this means we should exclude it from this sum or handle its proximity.
+                // For simplicity, we assume distToOther will be > tolerance here.
+                if (distToOther > tolerance) { 
+                    subgradientY += otherDest.weight * (otherDest.lat - singularDest.lat) / distToOther;
+                    subgradientX += otherDest.weight * (otherDest.lon - singularDest.lon) / distToOther;
                 }
             }
             
-            // This condition is a proxy for the subgradient test:
-            // ||sum(w_j * (D_j - D_i) / ||D_j - D_i||) || <= w_i
-            // We approximate this by checking if the combined "pull" of other points is balanced by the singular point's weight.
-            // Note: This is still an approximation for geographical coordinates,
-            // but is far better than simply returning the singular point.
-            // A perfect solution requires projecting to a local Euclidean plane or using spherical geometry's equivalent of subgradients.
-            const pullMagnitude = Math.sqrt(pullVectorX * pullVectorX + pullVectorY * pullVectorY);
+            // The Euclidean norm of the subgradient vector must be less than or equal to the weight of the singular point.
+            // Note: This is still an approximation given we're using Haversine distances for individual components,
+            // but it's the standard approach for the Weiszfeld algorithm in Euclidean space, adapted for geo-coordinates.
+            const subgradientMagnitude = Math.sqrt(subgradientX * subgradientX + subgradientY * subgradientY);
 
-            if (pullMagnitude <= singularDest.weight) {
-                // The singular destination is indeed the optimal point.
+            if (subgradientMagnitude <= singularDest.weight) {
+                // The singular destination IS the optimal point
                 x = singularDest.lon;
                 y = singularDest.lat;
-                break; // Converged to this destination
+                break; // Converged
             } else {
-                // The singular destination is NOT the optimal point, but the algorithm is stuck.
-                // Perturb the point slightly to move away and continue.
-                // This is a heuristic to escape the singularity.
-                x += (Math.random() - 0.5) * tolerance * 10; // Small random perturbation
-                y += (Math.random() - 0.5) * tolerance * 10; // Small random perturbation
+                // The singular destination is NOT the optimal point, perturb and continue
+                // This is a heuristic to escape the singularity, allowing the algorithm to continue searching.
+                // A small random perturbation is often used.
+                x += (Math.random() - 0.5) * tolerance * 10; 
+                y += (Math.random() - 0.5) * tolerance * 10; 
                 continue; // Continue with the next iteration from the perturbed point
             }
         }
 
+        // If not at a singular point, proceed with the standard Weiszfeld update
         const newX = numLon / denom;
         const newY = numLat / denom;
 
@@ -521,6 +516,8 @@ function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, 
     };
 }
 
+
+        
         
         // Haversine distance calculation
 function haversineDistance(lat1, lon1, lat2, lon2) {
