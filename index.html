@@ -422,7 +422,7 @@ function initMap() {
 }
 
         
-function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 20000, tolerance = 1e-7) {
+function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, tolerance = 1e-7) {
     if (destinations.length === 0) {
         return null;
     }
