@@ -401,6 +401,52 @@
             Object.values(layerGroups).forEach(layer => layer.addTo(map));
         }
 
+function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100, tolerance = 1e-6) {
+    // Start from weighted centroid
+    let x = 0, y = 0, totalWeight = 0;
+    for (const dest of destinations) {
+        x += dest.lon * dest.weight;
+        y += dest.lat * dest.weight;
+        totalWeight += dest.weight;
+    }
+    x /= totalWeight;
+    y /= totalWeight;
+
+    for (let iter = 0; iter < maxIterations; iter++) {
+        let numLat = 0, numLon = 0, denom = 0;
+
+        for (const dest of destinations) {
+            const dx = x - dest.lon;
+            const dy = y - dest.lat;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < 1e-10) continue; // Avoid division by zero
+
+            const wOverDist = dest.weight / dist;
+            numLon += dest.lon * wOverDist;
+            numLat += dest.lat * wOverDist;
+            denom += wOverDist;
+        }
+
+        const newX = numLon / denom;
+        const newY = numLat / denom;
+
+        const delta = Math.sqrt((newX - x) ** 2 + (newY - y) ** 2);
+        x = newX;
+        y = newY;
+
+        if (delta < tolerance) break; // Converged
+    }
+
+    // Final point
+    return {
+        lon: x,
+        lat: y
+    };
+}
+
+
+        
         // Haversine distance calculation
         function haversineDistance(lat1, lon1, lat2, lon2) {
             const R = 6371; // Earth's radius in kilometers
@@ -781,48 +827,22 @@ for (let item of destinationItems) {
                     return;
                 }
 
-                // Calculate bounding box
-                const lats = destinations.map(d => d.lat);
-                const lons = destinations.map(d => d.lon);
-                const buffer = parseFloat(document.getElementById('bufferSize').value);
+// Compute optimal location using Weiszfeld’s algorithm
+const result = computeOptimalLocation_Weiszfeld(destinations);
+
+// Add back average weighted distance
+let totalWeightedDistance = 0, totalWeight = 0;
+for (const dest of destinations) {
+    const dist = haversineDistance(result.lat, result.lon, dest.lat, dest.lon);
+    totalWeightedDistance += dist * dest.weight;
+    totalWeight += dest.weight;
+}
+result.avgWeightedDistance = totalWeightedDistance / totalWeight;
+
+optimalLocation = result;
+
+
                 
-                const bounds = {
-                    minLat: Math.min(...lats) - buffer,
-                    maxLat: Math.max(...lats) + buffer,
-                    minLon: Math.min(...lons) - buffer,
-                    maxLon: Math.max(...lons) + buffer
-                };
-
-                // Generate grid
-                const gridSpacing = parseFloat(document.getElementById('gridSpacing').value);
-                gridPoints = [];
-                
-                for (let lat = bounds.minLat; lat <= bounds.maxLat; lat += gridSpacing) {
-                    for (let lon = bounds.minLon; lon <= bounds.maxLon; lon += gridSpacing) {
-                        let weightedDistance = 0;
-                        let totalWeight = 0;
-                        
-                        for (let dest of destinations) {
-                            const distance = haversineDistance(lat, lon, dest.lat, dest.lon);
-                            weightedDistance += distance * dest.weight;
-                            totalWeight += dest.weight;
-                        }
-                        
-                        const avgWeightedDistance = weightedDistance / totalWeight;
-                        
-                        gridPoints.push({
-                            lat: lat,
-                            lon: lon,
-                            avgWeightedDistance: avgWeightedDistance
-                        });
-                    }
-                }
-
-                // Find optimal point
-                optimalLocation = gridPoints.reduce((best, current) => 
-                    current.avgWeightedDistance < best.avgWeightedDistance ? current : best
-                );
-
                 // Visualize results
                 await visualizeResults();
                 displayResults();
@@ -854,43 +874,7 @@ for (let item of destinationItems) {
                 layerGroups.destinations.addLayer(marker);
             });
 
-            // Add grid points with color coding
-            const distances = gridPoints.map(p => p.avgWeightedDistance);
-            const minDist = Math.min(...distances);
-            const maxDist = Math.max(...distances);
 
-            // Sample grid points for visualization (to avoid too many markers)
-            const sampleSize = Math.min(gridPoints.length, 1000);
-            const sampleStep = Math.floor(gridPoints.length / sampleSize);
-
-
-for (let i = 0; i < gridPoints.length; i += sampleStep) {
-    const point = gridPoints[i];
-
-    // Normalize score: 0 = best, 1 = worst
-    const normalized = (point.avgWeightedDistance - minDist) / (maxDist - minDist);
-
-    // Bigger & more visible near optimal point
-    const radius = 5 + (1 - normalized) * 5;          // From 5 (worst) to 10 (best)
-    const opacity = 0.2 + (1 - normalized) * 0.6;     // From 0.2 (faint) to 0.8 (bright)
-    
-    const color = getColorForDistance(point.avgWeightedDistance, minDist, maxDist);
-
-    const circle = L.circleMarker([point.lat, point.lon], {
-        radius: radius,
-        fillColor: color,
-        color: color,
-        weight: 0,
-        opacity: opacity,
-        fillOpacity: opacity
-    }).bindPopup(`
-        Weighted Distance: ${point.avgWeightedDistance.toFixed(2)} km
-    `);
-
-    layerGroups.grid.addLayer(circle);
-}
-
-            
             // Add optimal location
             const optimalMarker = L.marker([optimalLocation.lat, optimalLocation.lon], {
                 icon: L.divIcon({
