@@ -271,11 +271,15 @@
 
                 <div id="destinationsContainer">
                     <div class="destination-item">
-                        <div class="destination-inputs">
-                            <input type="text" placeholder="Address or Location" class="location-input">
-                            <input type="text" placeholder="Name (optional)" class="name-input">
-                            <input type="number" min="0.1" step="0.1" value="1.0" class="weight-input" placeholder="Weight">
-                        </div>
+<div class="destination-inputs">
+    <div class="autocomplete-container">
+        <input type="text" placeholder="Address, place name, or coordinates" class="location-input">
+        <div class="autocomplete-dropdown" style="display: none;"></div>
+    </div>
+    <input type="text" placeholder="Name (optional)" class="name-input">
+    <input type="number" min="0.1" step="0.1" value="1.0" class="weight-input" placeholder="Weight">
+</div>
+<div class="destination-label">Destination: <span class="dest-letter">A</span></div>
                         <button class="btn btn-secondary remove-destination">Remove</button>
                     </div>
                 </div>
