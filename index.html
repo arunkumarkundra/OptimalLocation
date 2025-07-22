@@ -1311,6 +1311,9 @@ function importResults(event) {
     reader.readAsText(file);
 }
 
+
+document.addEventListener('DOMContentLoaded', () => {
+  const downloadReportBtn = document.getElementById('downloadReport');        
 downloadReportBtn.addEventListener('click', async () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
@@ -1446,7 +1449,7 @@ yOffset = doc.lastAutoTable.finalY + 10;
 
 });
 
-
+});
 
         
 function getDestinations() {
