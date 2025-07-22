@@ -1325,13 +1325,31 @@ downloadReportBtn.addEventListener('click', async () => {
     doc.text('Optimal Location Finder Report', 105, 20, { align: 'center' });
 
     // 📸 Add map image just below the title
-    const mapCanvas = await html2canvas(document.getElementById('map'), {
-        useCORS: true
-    });
-    const mapImgData = mapCanvas.toDataURL('image/png');
-    doc.addImage(mapImgData, 'PNG', 15, 30, 180, 90); // Adjust size if needed
+    map.invalidateSize();
+await new Promise(r => setTimeout(r, 300)); // Allow re-rendering before screenshot
 
-    let yOffset = 125; // Start below the image
+// 👇 Optional: Make sure the map is fully rendered before capturing
+map.invalidateSize();
+await new Promise(r => setTimeout(r, 300)); // wait 300ms
+
+// 📸 Capture map
+const mapCanvas = await html2canvas(document.getElementById('map'), {
+    useCORS: true
+});
+const mapImgData = mapCanvas.toDataURL('image/png');
+
+// 🧮 Maintain aspect ratio
+const imgProps = doc.getImageProperties(mapImgData);
+const pdfWidth = 180; // max width within margins
+const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+// 🖼️ Add image to PDF
+doc.addImage(mapImgData, 'PNG', 15, 30, pdfWidth, pdfHeight);
+
+// 📏 Set vertical offset for next section
+let yOffset = 30 + pdfHeight + 10;
+
+//    let yOffset = 125; // Start below the image
 
     // Destinations Table
     doc.setFontSize(12);
@@ -1353,16 +1371,55 @@ downloadReportBtn.addEventListener('click', async () => {
     doc.text('Results:', 20, yOffset + 10);
     yOffset += 20;
     doc.setFontSize(10);
-    const lines = doc.splitTextToSize(resultsText, 170);
-    lines.forEach(line => {
-        if (yOffset > 270) {
-            doc.addPage();
-            yOffset = 20;
-        }
-        doc.text(line, 20, yOffset);
-        yOffset += 10;
-    });
+// Extract optimal location
+const optimalLoc = destinations.length > 0 && window.optimalLocation
+    ? {
+        lat: optimalLocation.lat.toFixed(6),
+        lon: optimalLocation.lon.toFixed(6),
+        avgDist: optimalLocation.avgWeightedDistance.toFixed(2)
+    } : null;
 
+// Insert prominent optimal info below map
+if (optimalLoc) {
+    doc.setFontSize(12);
+    doc.setTextColor(0, 102, 51);
+    doc.setFont(undefined, 'bold');
+    doc.text(`🎯 Optimal Location Coordinates: ${optimalLoc.lat}, ${optimalLoc.lon}`, 20, yOffset);
+    doc.text(`📏 Average Weighted Distance: ${optimalLoc.avgDist} km`, 20, yOffset + 10);
+    yOffset += 25;
+}
+
+// Then show table of results
+doc.setFont(undefined, 'normal');
+doc.setTextColor(0, 0, 0);
+doc.text('Results:', 20, yOffset);
+
+yOffset += 5;
+
+const resultTable = destinations.map((dest, i) => {
+    const dist = haversineDistance(optimalLocation.lat, optimalLocation.lon, dest.lat, dest.lon).toFixed(2);
+    const weighted = (dist * dest.weight).toFixed(2);
+    return [
+        i + 1,
+        dest.name || 'Unnamed',
+        `${dist} km`,
+        dest.weight,
+        `${weighted} km·w`
+    ];
+});
+
+doc.autoTable({
+    head: [['#', 'Destination', 'Distance from Optimal', 'Weight', 'Weighted Contribution']],
+    body: resultTable,
+    startY: yOffset + 10,
+    theme: 'striped',
+    headStyles: { fillColor: [102, 126, 234] }
+});
+
+yOffset = doc.lastAutoTable.finalY + 10;
+
+
+    
     // Footer
     doc.setFontSize(10);
     doc.setTextColor(100);
