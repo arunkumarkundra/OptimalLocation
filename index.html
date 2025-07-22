@@ -423,15 +423,40 @@ function initMap() {
 
 function computeOptimalLocation_Grid(destinations, cellThreshold = 100) {
     if (destinations.length === 0) return null;
+    
+    // Handle edge case: single destination
     if (destinations.length === 1) {
         return { 
             lat: destinations[0].lat, 
             lon: destinations[0].lon,
+            avgWeightedDistance: 0,
             heatmapPoints: [{lat: destinations[0].lat, lon: destinations[0].lon, score: 0}]
         };
     }
+    
+    // Handle edge case: two destinations - return weighted midpoint
+    if (destinations.length === 2) {
+        const totalWeight = destinations[0].weight + destinations[1].weight;
+        const weightedLat = (destinations[0].lat * destinations[0].weight + destinations[1].lat * destinations[1].weight) / totalWeight;
+        const weightedLon = (destinations[0].lon * destinations[0].weight + destinations[1].lon * destinations[1].weight) / totalWeight;
+        
+        // Calculate average weighted distance for this point
+        let totalWeightedDistance = 0;
+        for (const dest of destinations) {
+            const distance = haversineDistance(weightedLat, weightedLon, dest.lat, dest.lon);
+            totalWeightedDistance += distance * dest.weight;
+        }
+        const avgWeightedDistance = totalWeightedDistance / totalWeight;
+        
+        return {
+            lat: weightedLat,
+            lon: weightedLon,
+            avgWeightedDistance: avgWeightedDistance,
+            heatmapPoints: [{lat: weightedLat, lon: weightedLon, score: avgWeightedDistance}]
+        };
+    }
 
-    // Find bounding box
+    // For 3+ destinations, use grid-based approach
     const lats = destinations.map(d => d.lat);
     const lons = destinations.map(d => d.lon);
     let minLat = Math.min(...lats);
@@ -439,22 +464,39 @@ function computeOptimalLocation_Grid(destinations, cellThreshold = 100) {
     let minLon = Math.min(...lons);
     let maxLon = Math.max(...lons);
 
+    // Handle edge case: all points are very close (same lat or same lon)
+    const latRange = maxLat - minLat;
+    const lonRange = maxLon - minLon;
+    
+    if (latRange < 0.0001) { // Less than ~10m difference
+        const buffer = 0.001; // ~100m buffer
+        minLat -= buffer;
+        maxLat += buffer;
+    }
+    
+    if (lonRange < 0.0001) { // Less than ~10m difference  
+        const buffer = 0.001; // ~100m buffer
+        minLon -= buffer;
+        maxLon += buffer;
+    }
+
     let iteration = 0;
     let gridPoints = [];
 
     while (iteration < 10) { // Safety limit
         // Calculate current cell size in meters
-        const latRange = maxLat - minLat;
-        const lonRange = maxLon - minLon;
-        const cellSizeLat = latRange / 100;
-        const cellSizeLon = lonRange / 100;
+        const currentLatRange = maxLat - minLat;
+        const currentLonRange = maxLon - minLon;
+        const cellSizeLat = currentLatRange / 99; // 99 intervals for 100 points
+        const cellSizeLon = currentLonRange / 99;
         
-        // Convert to approximate meters (rough estimation)
+        // Convert to approximate meters (more accurate conversion)
+        const avgLat = (minLat + maxLat) / 2;
         const cellSizeMetersLat = cellSizeLat * 111320; // degrees to meters conversion
-        const cellSizeMetersLon = cellSizeLon * 111320 * Math.cos(((minLat + maxLat) / 2) * Math.PI / 180);
+        const cellSizeMetersLon = cellSizeLon * 111320 * Math.cos(avgLat * Math.PI / 180);
         const avgCellSizeMeters = (cellSizeMetersLat + cellSizeMetersLon) / 2;
 
-        console.log(`Iteration ${iteration + 1}: Cell size ~${Math.round(avgCellSizeMeters)}m`);
+        console.log(`Iteration ${iteration + 1}: Cell size ~${Math.round(avgCellSizeMeters)}m, Bounds: ${minLat.toFixed(4)}-${maxLat.toFixed(4)}, ${minLon.toFixed(4)}-${maxLon.toFixed(4)}`);
 
         if (avgCellSizeMeters <= cellThreshold) {
             console.log(`Converged at ${Math.round(avgCellSizeMeters)}m resolution`);
@@ -465,8 +507,8 @@ function computeOptimalLocation_Grid(destinations, cellThreshold = 100) {
         gridPoints = [];
         for (let i = 0; i < 100; i++) {
             for (let j = 0; j < 100; j++) {
-                const lat = minLat + (i / 99) * (maxLat - minLat);
-                const lon = minLon + (j / 99) * (maxLon - minLon);
+                const lat = minLat + (i / 99) * currentLatRange;
+                const lon = minLon + (j / 99) * currentLonRange;
                 
                 // Calculate weighted distance score for this point
                 let totalWeightedDistance = 0;
@@ -487,29 +529,33 @@ function computeOptimalLocation_Grid(destinations, cellThreshold = 100) {
         gridPoints.sort((a, b) => a.score - b.score);
         
         // Take top 10% points
-        const topPoints = gridPoints.slice(0, Math.ceil(gridPoints.length * 0.1));
+        const topPointsCount = Math.max(10, Math.ceil(gridPoints.length * 0.1)); // At least 10 points
+        const topPoints = gridPoints.slice(0, topPointsCount);
         
         // Find new bounding box around top points
         const topLats = topPoints.map(p => p.lat);
         const topLons = topPoints.map(p => p.lon);
-        minLat = Math.min(...topLats);
-        maxLat = Math.max(...topLats);
-        minLon = Math.min(...topLons);
-        maxLon = Math.max(...topLons);
+        const newMinLat = Math.min(...topLats);
+        const newMaxLat = Math.max(...topLats);
+        const newMinLon = Math.min(...topLons);
+        const newMaxLon = Math.max(...topLons);
 
-        // Add small buffer to ensure we don't lose the optimal point
-        const latBuffer = (maxLat - minLat) * 0.1;
-        const lonBuffer = (maxLon - minLon) * 0.1;
-        minLat -= latBuffer;
-        maxLat += latBuffer;
-        minLon -= lonBuffer;
-        maxLon += lonBuffer;
+        // Add small buffer to ensure we don't lose the optimal point (5% buffer)
+        const newLatRange = newMaxLat - newMinLat;
+        const newLonRange = newMaxLon - newMinLon;
+        const latBuffer = Math.max(newLatRange * 0.05, cellSizeLat); // At least one cell buffer
+        const lonBuffer = Math.max(newLonRange * 0.05, cellSizeLon);
+        
+        minLat = newMinLat - latBuffer;
+        maxLat = newMaxLat + latBuffer;
+        minLon = newMinLon - lonBuffer;
+        maxLon = newMaxLon + lonBuffer;
 
         iteration++;
     }
 
     // Return best point and heatmap data (top 5% for visualization)
-    const heatmapSize = Math.ceil(gridPoints.length * 0.05);
+    const heatmapSize = Math.max(5, Math.ceil(gridPoints.length * 0.05)); // At least 5 points
     const heatmapPoints = gridPoints.slice(0, heatmapSize);
     
     const optimal = gridPoints[0];
@@ -520,6 +566,8 @@ function computeOptimalLocation_Grid(destinations, cellThreshold = 100) {
         heatmapPoints: heatmapPoints
     };
 }
+
+
 
         
 function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, tolerance = 1e-7) {
