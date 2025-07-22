@@ -421,6 +421,107 @@ function initMap() {
     }
 }
 
+function computeOptimalLocation_Grid(destinations, cellThreshold = 100) {
+    if (destinations.length === 0) return null;
+    if (destinations.length === 1) {
+        return { 
+            lat: destinations[0].lat, 
+            lon: destinations[0].lon,
+            heatmapPoints: [{lat: destinations[0].lat, lon: destinations[0].lon, score: 0}]
+        };
+    }
+
+    // Find bounding box
+    const lats = destinations.map(d => d.lat);
+    const lons = destinations.map(d => d.lon);
+    let minLat = Math.min(...lats);
+    let maxLat = Math.max(...lats);
+    let minLon = Math.min(...lons);
+    let maxLon = Math.max(...lons);
+
+    let iteration = 0;
+    let gridPoints = [];
+
+    while (iteration < 10) { // Safety limit
+        // Calculate current cell size in meters
+        const latRange = maxLat - minLat;
+        const lonRange = maxLon - minLon;
+        const cellSizeLat = latRange / 100;
+        const cellSizeLon = lonRange / 100;
+        
+        // Convert to approximate meters (rough estimation)
+        const cellSizeMetersLat = cellSizeLat * 111320; // degrees to meters conversion
+        const cellSizeMetersLon = cellSizeLon * 111320 * Math.cos(((minLat + maxLat) / 2) * Math.PI / 180);
+        const avgCellSizeMeters = (cellSizeMetersLat + cellSizeMetersLon) / 2;
+
+        console.log(`Iteration ${iteration + 1}: Cell size ~${Math.round(avgCellSizeMeters)}m`);
+
+        if (avgCellSizeMeters <= cellThreshold) {
+            console.log(`Converged at ${Math.round(avgCellSizeMeters)}m resolution`);
+            break;
+        }
+
+        // Generate 100x100 grid
+        gridPoints = [];
+        for (let i = 0; i < 100; i++) {
+            for (let j = 0; j < 100; j++) {
+                const lat = minLat + (i / 99) * (maxLat - minLat);
+                const lon = minLon + (j / 99) * (maxLon - minLon);
+                
+                // Calculate weighted distance score for this point
+                let totalWeightedDistance = 0;
+                let totalWeight = 0;
+                
+                for (const dest of destinations) {
+                    const distance = haversineDistance(lat, lon, dest.lat, dest.lon);
+                    totalWeightedDistance += distance * dest.weight;
+                    totalWeight += dest.weight;
+                }
+                
+                const avgWeightedDistance = totalWeightedDistance / totalWeight;
+                gridPoints.push({ lat, lon, score: avgWeightedDistance });
+            }
+        }
+
+        // Sort by score (lower is better)
+        gridPoints.sort((a, b) => a.score - b.score);
+        
+        // Take top 10% points
+        const topPoints = gridPoints.slice(0, Math.ceil(gridPoints.length * 0.1));
+        
+        // Find new bounding box around top points
+        const topLats = topPoints.map(p => p.lat);
+        const topLons = topPoints.map(p => p.lon);
+        minLat = Math.min(...topLats);
+        maxLat = Math.max(...topLats);
+        minLon = Math.min(...topLons);
+        maxLon = Math.max(...topLons);
+
+        // Add small buffer to ensure we don't lose the optimal point
+        const latBuffer = (maxLat - minLat) * 0.1;
+        const lonBuffer = (maxLon - minLon) * 0.1;
+        minLat -= latBuffer;
+        maxLat += latBuffer;
+        minLon -= lonBuffer;
+        maxLon += lonBuffer;
+
+        iteration++;
+    }
+
+    // Return best point and heatmap data (top 5% for visualization)
+    const heatmapSize = Math.ceil(gridPoints.length * 0.05);
+    const heatmapPoints = gridPoints.slice(0, heatmapSize);
+    
+    const optimal = gridPoints[0];
+    return {
+        lat: optimal.lat,
+        lon: optimal.lon,
+        avgWeightedDistance: optimal.score,
+        heatmapPoints: heatmapPoints
+    };
+}
+
+        
 function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, tolerance = 1e-7) {
     if (destinations.length === 0) {
         return null;
@@ -883,8 +984,10 @@ for (let item of destinationItems) {
                 }
 
 // Compute optimal location using Weiszfeld’s algorithm
-const result = computeOptimalLocation_Weiszfeld(destinations);
+// const result = computeOptimalLocation_Weiszfeld(destinations);
 
+const result = computeOptimalLocation_Grid(destinations);
+                
 // Add back average weighted distance
 let totalWeightedDistance = 0, totalWeight = 0;
 for (const dest of destinations) {
@@ -973,11 +1076,41 @@ optimalLocation = result;
                 `;
             });
 
+// Add heatmap if available
+if (optimalLocation.heatmapPoints && optimalLocation.heatmapPoints.length > 0) {
+    // Normalize scores for color mapping
+    const scores = optimalLocation.heatmapPoints.map(p => p.score);
+    const minScore = Math.min(...scores);
+    const maxScore = Math.max(...scores);
+    
+    optimalLocation.heatmapPoints.forEach(point => {
+        const normalizedScore = (point.score - minScore) / (maxScore - minScore);
+        const opacity = 0.3 + (1 - normalizedScore) * 0.4; // Better points = more opaque
+        const color = getColorForDistance(point.score, minScore, maxScore);
+        
+        const heatCircle = L.circle([point.lat, point.lon], {
+            color: color,
+            fillColor: color,
+            fillOpacity: opacity,
+            radius: 200, // 200m radius circles
+            weight: 1
+        }).bindPopup(`
+            <strong>🔥 Good Location Zone</strong><br>
+            Avg Weighted Distance: ${point.score.toFixed(2)} km<br>
+            Rank: Top 5%
+        `);
+        
+        layerGroups.grid.addLayer(heatCircle);
+    });
+}
+            
             html += `
-                <div class="result-item">
-                    <strong>📊 Analysis Summary</strong><br>
-                    Total destinations: ${destinations.length}<br>
-                </div>
+    <div class="result-item">
+        <strong>📊 Analysis Summary</strong><br>
+        Total destinations: ${destinations.length}<br>
+        Heatmap zones shown: ${optimalLocation.heatmapPoints ? optimalLocation.heatmapPoints.length : 0}<br>
+        <small>🔥 Red circles show top 5% alternative locations</small>
+    </div>
             `;
 
             resultsContent.innerHTML = html;
