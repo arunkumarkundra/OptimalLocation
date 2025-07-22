@@ -1325,12 +1325,19 @@ downloadReportBtn.addEventListener('click', async () => {
     doc.text('Optimal Location Finder Report', 105, 20, { align: 'center' });
 
     // 📸 Add map image just below the title
-    map.invalidateSize();
-await new Promise(r => setTimeout(r, 300)); // Allow re-rendering before screenshot
+    // ⏳ Ensure Leaflet has time to fully render everything (especially heatmap layers)
+map.invalidateSize(); // Adjust size in case of layout shifts
 
-// 👇 Optional: Make sure the map is fully rendered before capturing
-map.invalidateSize();
-await new Promise(r => setTimeout(r, 300)); // wait 300ms
+// Fit to all key points (destinations + optimal)
+const bounds = L.latLngBounds([
+    ...window.destinations.map(d => [d.lat, d.lon]),
+    [window.optimalLocation.lat, window.optimalLocation.lon]
+]);
+map.fitBounds(bounds, { padding: [20, 20] });
+
+// Delay to let browser re-render the heatmap and circles before screenshot
+await new Promise(resolve => setTimeout(resolve, 500));
+
 
 // 📸 Capture map
 const mapCanvas = await html2canvas(document.getElementById('map'), {
@@ -1396,17 +1403,24 @@ doc.text('Results:', 20, yOffset);
 
 yOffset += 5;
 
-const resultTable = destinations.map((dest, i) => {
-    const dist = haversineDistance(optimalLocation.lat, optimalLocation.lon, dest.lat, dest.lon).toFixed(2);
-    const weighted = (dist * dest.weight).toFixed(2);
-    return [
-        i + 1,
-        dest.name || 'Unnamed',
-        `${dist} km`,
-        dest.weight,
-        `${weighted} km·w`
-    ];
+const resultTable = window.destinations.map((dest, i) => {
+  const dist = haversineDistance(
+    window.optimalLocation.lat,
+    window.optimalLocation.lon,
+    dest.lat,
+    dest.lon
+  ).toFixed(2);
+
+  const weighted = (dist * dest.weight).toFixed(2);
+  return [
+    i + 1,
+    dest.name || 'Unnamed',
+    `${dist} km`,
+    dest.weight,
+    `${weighted} km·w`
+  ];
 });
+
 
 doc.autoTable({
     head: [['#', 'Destination', 'Distance from Optimal', 'Weight', 'Weighted Contribution']],
