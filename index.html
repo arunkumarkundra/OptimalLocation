@@ -1381,9 +1381,9 @@ let yOffset = 30 + pdfHeight + 10;
 // Extract optimal location
 const optimalLoc = destinations.length > 0 && window.optimalLocation
     ? {
-        lat: optimalLocation.lat.toFixed(6),
-        lon: optimalLocation.lon.toFixed(6),
-        avgDist: optimalLocation.avgWeightedDistance.toFixed(2)
+        lat:  window.optimalLocation.lat.toFixed(6),
+        lon:  window.optimalLocation.lon.toFixed(6),
+        avgDist:  window.optimalLocation.avgWeightedDistance.toFixed(2)
     } : null;
 
 // Insert prominent optimal info below map
@@ -1414,7 +1414,7 @@ const resultTable = window.destinations.map((dest, i) => {
   const weighted = (dist * dest.weight).toFixed(2);
   return [
     i + 1,
-    dest.name || 'Unnamed',
+    dest.name || dest.destination || 'Unnamed',
     `${dist} km`,
     dest.weight,
     `${weighted} km·w`
