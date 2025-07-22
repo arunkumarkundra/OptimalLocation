@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Optimal Location Finder</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <style>
         * {
@@ -215,11 +219,8 @@
         }
 
 #downloadReport {
-    background-color: #28a745;
+    @apply btn btn-primary;
     margin-left: 10px;
-}
-#downloadReport:hover {
-    background-color: #218838;
 }
 
         
@@ -1316,7 +1317,8 @@ downloadReportBtn.addEventListener('click', () => {
     const siteUrl = window.location.href;
     const destinations = getDestinations();
     const resultsDiv = document.getElementById('resultsContent');
-    const resultsText = resultsDiv.textContent || 'No results available';
+//    const resultsText = resultsDiv.textContent || 'No results available';
+const resultsText = resultsDiv.innerText.replace(/[^\x00-\x7F]/g, '');
 
     // Header
     doc.setFontSize(20);
@@ -1328,16 +1330,32 @@ downloadReportBtn.addEventListener('click', () => {
     doc.setTextColor(0, 0, 0);
     doc.text('Destinations and Weights:', 20, 40);
     let yOffset = 50;
-    destinations.forEach(({ destination, weight }, index) => {
-        doc.text(`${index + 1}. ${destination}: Weight ${weight}`, 20, yOffset);
-        yOffset += 10;
-    });
+doc.autoTable({
+    head: [['#', 'Destination', 'Weight']],
+    body: destinations.map((d, i) => [i + 1, d.destination, d.weight]),
+    startY: yOffset,
+    theme: 'grid',
+    headStyles: { fillColor: [102, 126, 234] }
+});
+yOffset = doc.lastAutoTable.finalY + 10;
+
+    
 
     // Results
     doc.text('Results:', 20, yOffset + 10);
     yOffset += 20;
     doc.setFontSize(10);
-    doc.text(doc.splitTextToSize(resultsText, 170), 20, yOffset);
+//    doc.text(doc.splitTextToSize(resultsText, 170), 20, yOffset);
+const lines = doc.splitTextToSize(resultsText, 170);
+lines.forEach(line => {
+    if (yOffset > 270) {
+        doc.addPage();
+        yOffset = 20;
+    }
+    doc.text(line, 20, yOffset);
+    yOffset += 10;
+});
+
     yOffset += 10 * (resultsText.split('\n').length + 1);
 
     // Footer
