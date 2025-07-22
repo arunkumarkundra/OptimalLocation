@@ -394,6 +394,8 @@ let userCurrentLon = 77.5946; // Default to Bangalore, India (your current locat
         };
         let destinationCounter = 0;
         let geocodeTimeouts = {};
+const downloadReportBtn = document.getElementById('downloadReport');
+
         
         // Initialize map
 
@@ -1313,6 +1315,7 @@ downloadReportBtn.addEventListener('click', () => {
     const doc = new jsPDF();
     const siteUrl = window.location.href;
     const destinations = getDestinations();
+    const resultsDiv = document.getElementById('resultsContent');
     const resultsText = resultsDiv.textContent || 'No results available';
 
     // Header
@@ -1349,12 +1352,13 @@ const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
 });
 
 function getDestinations() {
-    const entries = destinationsContainer.querySelectorAll('.destination-entry');
+    const entries = document.querySelectorAll('.destination-item');
     return Array.from(entries).map(entry => ({
-        destination: entry.querySelector('.destination').value || 'Unnamed',
-        weight: entry.querySelector('.weight').value || 1
+        destination: entry.querySelector('.location-input')?.value || 'Unnamed',
+        weight: entry.querySelector('.weight-input')?.value || 1
     }));
 }
+
 
         
         // Initialize the app
