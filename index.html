@@ -6,10 +6,6 @@
     <title>Optimal Location Finder</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-    
     <style>
         * {
             margin: 0;
@@ -370,7 +366,7 @@
                     <div id="resultsContent"></div>
                         <div style="display: flex; gap: 10px; margin-top: 15px;">
                             <button class="btn btn-primary" onclick="exportResults()">📄 Export Results</button>
-                            <button class="btn btn-primary" id="downloadReport">📥 Download Report</button>
+                            <button class="btn btn-primary" onclick="downloadReport()">📊 Download Report</button>
                         </div>
                 </div>
             </div>
@@ -380,6 +376,10 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
     <script>
         let map;
 let userCurrentLat = 12.9716; // Default to Bangalore, India (your current location)
@@ -1177,6 +1177,132 @@ if (optimalLocation.heatmapPoints && optimalLocation.heatmapPoints.length > 0) {
             document.getElementById('results').style.display = 'block';
         }
 
+
+function captureMapAsImage() {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 600;
+        canvas.height = 400;
+        const ctx = canvas.getContext('2d');
+        
+// Create a map-like background
+ctx.fillStyle = '#a8d8f0'; // Light blue like water/ocean
+ctx.fillRect(0, 0, 600, 400);
+
+// Add some landmass-like shapes for better map appearance
+ctx.fillStyle = '#d4c5b9'; // Light brown for land
+ctx.fillRect(50, 80, 200, 150);
+ctx.fillRect(300, 120, 180, 100);
+ctx.fillRect(120, 250, 150, 80);
+
+// Add border
+ctx.strokeStyle = '#2c3e50';
+ctx.lineWidth = 3;
+ctx.strokeRect(0, 0, 600, 400);
+
+        
+        // Add title with better contrast
+        ctx.fillStyle = '#2c3e50';
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText('Location Analysis Map', 20, 30);
+        
+        // Add grid lines for better visualization
+        ctx.strokeStyle = '#ddd';
+        ctx.lineWidth = 1;
+        for (let i = 50; i < 600; i += 50) {
+            ctx.beginPath();
+            ctx.moveTo(i, 50);
+            ctx.lineTo(i, 400);
+            ctx.stroke();
+        }
+        for (let i = 50; i < 400; i += 50) {
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(600, i);
+            ctx.stroke();
+        }
+        
+        if (map && destinations.length > 0) {
+            const mapBounds = map.getBounds();
+            const latRange = mapBounds.getNorth() - mapBounds.getSouth();
+            const lngRange = mapBounds.getEast() - mapBounds.getWest();
+            
+            // Plot destinations with better visibility
+            destinations.forEach((dest, index) => {
+                const x = ((dest.lon - mapBounds.getWest()) / lngRange) * 540 + 30;
+                const y = 370 - ((dest.lat - mapBounds.getSouth()) / latRange) * 300;
+                
+                // Add shadow for better visibility
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.beginPath();
+                ctx.arc(x + 2, y + 2, 10, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath();
+                ctx.arc(x, y, 10, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(String.fromCharCode(65 + index), x, y + 4);
+            });
+            
+            // Plot optimal location with better visibility
+            if (optimalLocation) {
+                const x = ((optimalLocation.lon - mapBounds.getWest()) / lngRange) * 540 + 30;
+                const y = 370 - ((optimalLocation.lat - mapBounds.getSouth()) / latRange) * 300;
+                
+                // Add shadow
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.beginPath();
+                ctx.arc(x + 3, y + 3, 15, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = '#27ae60';
+                ctx.beginPath();
+                ctx.arc(x, y, 15, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Draw a proper star shape
+ctx.fillStyle = '#fff';
+ctx.beginPath();
+// Star points (5-pointed star)
+const starSize = 8;
+for (let i = 0; i < 5; i++) {
+    const angle1 = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+    const angle2 = ((i + 1) * 4 * Math.PI) / 5 - Math.PI / 2;
+    const x1 = x + Math.cos(angle1) * starSize;
+    const y1 = y + Math.sin(angle1) * starSize;
+    const x2 = x + Math.cos(angle1 + Math.PI / 5) * (starSize * 0.4);
+    const y2 = y + Math.sin(angle1 + Math.PI / 5) * (starSize * 0.4);
+    
+    if (i === 0) ctx.moveTo(x1, y1);
+    else ctx.lineTo(x1, y1);
+    ctx.lineTo(x2, y2);
+}
+ctx.closePath();
+ctx.fill();
+
+// Add yellow outline for better visibility
+ctx.strokeStyle = '#f1c40f';
+ctx.lineWidth = 1;
+ctx.stroke();
+            }
+        }
+        
+        resolve(canvas.toDataURL('image/png'));
+    });
+}
         
         // Export results to CSV
         function exportResults() {
@@ -1229,24 +1355,8 @@ function checkPageBreak(doc, currentY, requiredSpace = 20) {
     return currentY;
 }
 
-
-// Add this helper function
-function getDestinations() {
-    const entries = document.querySelectorAll('.destination-item');
-    return Array.from(entries).map(entry => ({
-        destination: entry.querySelector('.location-input')?.value || 'Unnamed',
-        weight: entry.querySelector('.weight-input')?.value || 1
-    }));
-}
-
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Get the download button after DOM is loaded
-    const downloadReportBtn = document.getElementById('downloadReport');
-    
-    // Add the event listener
-    if (downloadReportBtn) {        
-downloadReportBtn.addEventListener('click', async () => {
+        
+async function downloadReport() {
     if (!optimalLocation || destinations.length === 0) {
         alert('No results to generate report');
         return;
@@ -1254,9 +1364,6 @@ downloadReportBtn.addEventListener('click', async () => {
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    const siteUrl = window.location.href;
-    const destinations = getDestinations();
-    const resultsDiv = document.getElementById('resultsContent');
     
     // Title
     doc.setFontSize(20);
@@ -1289,26 +1396,12 @@ doc.text(`Visit: ${window.location.origin}${window.location.pathname}`, 20, 49);
     yPos += 35;
     doc.setTextColor(0, 0, 0); // Reset to black
     
-    // 📸 Capture the actual map using html2canvas
-    map.invalidateSize();
-    await new Promise(r => setTimeout(r, 300)); // Allow re-rendering before screenshot
-
-    // 📸 Capture map
-    const mapCanvas = await html2canvas(document.getElementById('map'), {
-        useCORS: true
-    });
-    const mapImgData = mapCanvas.toDataURL('image/png');
-
-    // 🧮 Maintain aspect ratio
-    const imgProps = doc.getImageProperties(mapImgData);
-    const pdfWidth = 180; // max width within margins
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-    // 🖼️ Add image to PDF
-    doc.addImage(mapImgData, 'PNG', 15, 30, pdfWidth, pdfHeight);
-
-    // 📏 Set vertical offset for next section
-    let yOffset = 30 + pdfHeight + 10;
+    // Map Image
+html2canvas(document.getElementById('map')).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            doc.addImage(imgData, 'PNG', 20, yPos, 170, 113); // Add map image to PDF
+            yPos += 125;       
+            });
     
 // Check if we need a new page for the table
 yPos = checkPageBreak(doc, yPos, 30);
@@ -1368,10 +1461,7 @@ destinations.forEach((dest, index) => {
     const reportTimestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
     doc.save(`optimal_location_report_${reportTimestamp}.pdf`);
 }
-    }
-    
-    // ... your existing DOMContentLoaded code continues here
-});
+
         
 
 function importResults(event) {
