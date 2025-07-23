@@ -395,7 +395,6 @@ let userCurrentLon = 77.5946; // Default to Bangalore, India (your current locat
         };
         let destinationCounter = 0;
         let geocodeTimeouts = {};
-        const downloadReportBtn = document.getElementById('downloadReport');
         
         // Initialize map
 
@@ -1239,7 +1238,14 @@ function getDestinations() {
         weight: entry.querySelector('.weight-input')?.value || 1
     }));
 }
-        
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the download button after DOM is loaded
+    const downloadReportBtn = document.getElementById('downloadReport');
+    
+    // Add the event listener
+    if (downloadReportBtn) {        
 downloadReportBtn.addEventListener('click', async () => {
     if (!optimalLocation || destinations.length === 0) {
         alert('No results to generate report');
@@ -1362,7 +1368,10 @@ destinations.forEach((dest, index) => {
     const reportTimestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
     doc.save(`optimal_location_report_${reportTimestamp}.pdf`);
 }
-
+    }
+    
+    // ... your existing DOMContentLoaded code continues here
+});
         
 
 function importResults(event) {
