@@ -1176,61 +1176,102 @@ if (optimalLocation.heatmapPoints && optimalLocation.heatmapPoints.length > 0) {
 
 function captureMapAsImage() {
     return new Promise((resolve) => {
-        // Use leaflet-image or html2canvas alternative for map capture
-        // For now, we'll create a placeholder and use map bounds info
         const canvas = document.createElement('canvas');
         canvas.width = 600;
         canvas.height = 400;
         const ctx = canvas.getContext('2d');
         
-        // Create a simple map representation
-        ctx.fillStyle = '#e8f4f8';
+        // Create a simple map representation with better visibility
+        ctx.fillStyle = '#f0f8ff';
         ctx.fillRect(0, 0, 600, 400);
         
-        // Add title
+        // Add border
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(0, 0, 600, 400);
+        
+        // Add title with better contrast
         ctx.fillStyle = '#2c3e50';
-        ctx.font = 'bold 16px Arial';
+        ctx.font = 'bold 18px Arial';
         ctx.fillText('Location Analysis Map', 20, 30);
         
-        // Add destinations and optimal location as colored circles
-        const mapBounds = map.getBounds();
-        const latRange = mapBounds.getNorth() - mapBounds.getSouth();
-        const lngRange = mapBounds.getEast() - mapBounds.getWest();
-        
-        // Plot destinations
-        destinations.forEach((dest, index) => {
-            const x = ((dest.lon - mapBounds.getWest()) / lngRange) * 560 + 20;
-            const y = 380 - ((dest.lat - mapBounds.getSouth()) / latRange) * 340;
-            
-            ctx.fillStyle = '#e74c3c';
+        // Add grid lines for better visualization
+        ctx.strokeStyle = '#ddd';
+        ctx.lineWidth = 1;
+        for (let i = 50; i < 600; i += 50) {
             ctx.beginPath();
-            ctx.arc(x, y, 8, 0, 2 * Math.PI);
-            ctx.fill();
-            
-            ctx.fillStyle = '#2c3e50';
-            ctx.font = 'bold 12px Arial';
-            ctx.fillText(String.fromCharCode(65 + index), x + 12, y + 4);
-        });
-        
-        // Plot optimal location
-        if (optimalLocation) {
-            const x = ((optimalLocation.lon - mapBounds.getWest()) / lngRange) * 560 + 20;
-            const y = 380 - ((optimalLocation.lat - mapBounds.getSouth()) / latRange) * 340;
-            
-            ctx.fillStyle = '#27ae60';
+            ctx.moveTo(i, 50);
+            ctx.lineTo(i, 400);
+            ctx.stroke();
+        }
+        for (let i = 50; i < 400; i += 50) {
             ctx.beginPath();
-            ctx.arc(x, y, 12, 0, 2 * Math.PI);
-            ctx.fill();
+            ctx.moveTo(0, i);
+            ctx.lineTo(600, i);
+            ctx.stroke();
+        }
+        
+        if (map && destinations.length > 0) {
+            const mapBounds = map.getBounds();
+            const latRange = mapBounds.getNorth() - mapBounds.getSouth();
+            const lngRange = mapBounds.getEast() - mapBounds.getWest();
             
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 14px Arial';
-            ctx.fillText('★', x - 5, y + 5);
+            // Plot destinations with better visibility
+            destinations.forEach((dest, index) => {
+                const x = ((dest.lon - mapBounds.getWest()) / lngRange) * 540 + 30;
+                const y = 370 - ((dest.lat - mapBounds.getSouth()) / latRange) * 300;
+                
+                // Add shadow for better visibility
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.beginPath();
+                ctx.arc(x + 2, y + 2, 10, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath();
+                ctx.arc(x, y, 10, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(String.fromCharCode(65 + index), x, y + 4);
+            });
+            
+            // Plot optimal location with better visibility
+            if (optimalLocation) {
+                const x = ((optimalLocation.lon - mapBounds.getWest()) / lngRange) * 540 + 30;
+                const y = 370 - ((optimalLocation.lat - mapBounds.getSouth()) / latRange) * 300;
+                
+                // Add shadow
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.beginPath();
+                ctx.arc(x + 3, y + 3, 15, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = '#27ae60';
+                ctx.beginPath();
+                ctx.arc(x, y, 15, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('*', x, y + 5);
+            }
         }
         
         resolve(canvas.toDataURL('image/png'));
     });
 }
-
         
         // Export results to CSV
         function exportResults() {
@@ -1275,6 +1316,15 @@ const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
         }
 
 
+function checkPageBreak(doc, currentY, requiredSpace = 20) {
+    if (currentY + requiredSpace > 270) { // Leave space for page margins
+        doc.addPage();
+        return 20; // Reset to top of new page
+    }
+    return currentY;
+}
+
+        
 async function downloadReport() {
     if (!optimalLocation || destinations.length === 0) {
         alert('No results to generate report');
@@ -1289,13 +1339,15 @@ async function downloadReport() {
     doc.setFont(undefined, 'bold');
     doc.text('Optimal Location Analysis Report', 20, 25);
     
-    // Timestamp
-    const timestamp = new Date().toLocaleString();
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
-    doc.text(`Generated on: ${timestamp}`, 20, 35);
+// Timestamp and additional info
+const timestamp = new Date().toLocaleString();
+doc.setFontSize(10);
+doc.setFont(undefined, 'normal');
+doc.text(`Generated on: ${timestamp}`, 20, 35);
+doc.text('Generated by Optimal Location Finder', 20, 42);
+doc.text(`Visit: ${window.location.origin}${window.location.pathname}`, 20, 49);
     
-    let yPos = 50;
+    let yPos = 60;
     
     // Optimal Location Details (Highlighted)
     doc.setFillColor(39, 174, 96); // Green background
@@ -1303,7 +1355,7 @@ async function downloadReport() {
     doc.setTextColor(255, 255, 255); // White text
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.text('🎯 OPTIMAL LOCATION', 20, yPos + 5);
+    doc.text('OPTIMAL LOCATION', 20, yPos + 5);
     
     doc.setFontSize(11);
     doc.setFont(undefined, 'normal');
@@ -1328,7 +1380,7 @@ async function downloadReport() {
     // Destinations Table
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.text('📍 Destinations Summary', 20, yPos);
+    doc.text('Destinations Summary', 20, yPos);
     yPos += 10;
     
     // Table headers
@@ -1362,7 +1414,7 @@ async function downloadReport() {
     yPos += 10;
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
-    doc.text('📊 Analysis Summary', 20, yPos);
+    doc.text('Analysis Summary', 20, yPos);
     yPos += 8;
     
     doc.setFontSize(10);
@@ -1373,12 +1425,6 @@ async function downloadReport() {
     yPos += 5;
     doc.text(`Search resolution: Up to 100-meter precision`, 20, yPos);
     
-    // Footer
-    const footerY = 280;
-    doc.setFontSize(8);
-    doc.setFont(undefined, 'italic');
-    doc.text('Generated by Optimal Location Finder', 20, footerY);
-    doc.text(`Visit: ${window.location.origin}${window.location.pathname}`, 20, footerY + 4);
     
     // Save PDF
     const reportTimestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
