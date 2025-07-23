@@ -4,12 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Optimal Location Finder</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -192,6 +188,10 @@
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
 
+        .btn-primary:not(:last-child) {
+            margin-right: 0;
+        }
+        
         .btn-secondary {
             background: #e74c3c;
             color: white;
@@ -218,12 +218,6 @@
             box-shadow: 0 10px 25px rgba(39, 174, 96, 0.3);
         }
 
-#downloadReport {
-    @apply btn btn-primary;
-    margin-left: 10px;
-}
-
-        
         #map {
             height: 600px;
             border-radius: 15px;
@@ -370,9 +364,11 @@
                 <div class="results-section" id="results" style="display: none;">
                     <h3>📊 Results</h3>
                     <div id="resultsContent"></div>
-                    <button class="btn btn-primary" onclick="exportResults()">📄 Export Results</button>
- <button class="btn btn-primary" id="downloadReport">📥 Download Report</button>
-                 </div>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button class="btn btn-primary" onclick="exportResults()">📄 Export Results</button>
+                            <button class="btn btn-primary" onclick="downloadReport()">📊 Download Report</button>
+                        </div>
+                </div>
             </div>
 
             <div id="map"></div>
@@ -395,8 +391,6 @@ let userCurrentLon = 77.5946; // Default to Bangalore, India (your current locat
         };
         let destinationCounter = 0;
         let geocodeTimeouts = {};
-const downloadReportBtn = document.getElementById('downloadReport');
-
         
         // Initialize map
 
@@ -1179,6 +1173,65 @@ if (optimalLocation.heatmapPoints && optimalLocation.heatmapPoints.length > 0) {
             document.getElementById('results').style.display = 'block';
         }
 
+
+function captureMapAsImage() {
+    return new Promise((resolve) => {
+        // Use leaflet-image or html2canvas alternative for map capture
+        // For now, we'll create a placeholder and use map bounds info
+        const canvas = document.createElement('canvas');
+        canvas.width = 600;
+        canvas.height = 400;
+        const ctx = canvas.getContext('2d');
+        
+        // Create a simple map representation
+        ctx.fillStyle = '#e8f4f8';
+        ctx.fillRect(0, 0, 600, 400);
+        
+        // Add title
+        ctx.fillStyle = '#2c3e50';
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText('Location Analysis Map', 20, 30);
+        
+        // Add destinations and optimal location as colored circles
+        const mapBounds = map.getBounds();
+        const latRange = mapBounds.getNorth() - mapBounds.getSouth();
+        const lngRange = mapBounds.getEast() - mapBounds.getWest();
+        
+        // Plot destinations
+        destinations.forEach((dest, index) => {
+            const x = ((dest.lon - mapBounds.getWest()) / lngRange) * 560 + 20;
+            const y = 380 - ((dest.lat - mapBounds.getSouth()) / latRange) * 340;
+            
+            ctx.fillStyle = '#e74c3c';
+            ctx.beginPath();
+            ctx.arc(x, y, 8, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText(String.fromCharCode(65 + index), x + 12, y + 4);
+        });
+        
+        // Plot optimal location
+        if (optimalLocation) {
+            const x = ((optimalLocation.lon - mapBounds.getWest()) / lngRange) * 560 + 20;
+            const y = 380 - ((optimalLocation.lat - mapBounds.getSouth()) / latRange) * 340;
+            
+            ctx.fillStyle = '#27ae60';
+            ctx.beginPath();
+            ctx.arc(x, y, 12, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('★', x - 5, y + 5);
+        }
+        
+        resolve(canvas.toDataURL('image/png'));
+    });
+}
+
+        
         // Export results to CSV
         function exportResults() {
             if (!optimalLocation || destinations.length === 0) {
@@ -1222,6 +1275,117 @@ const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
         }
 
 
+async function downloadReport() {
+    if (!optimalLocation || destinations.length === 0) {
+        alert('No results to generate report');
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Title
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
+    doc.text('Optimal Location Analysis Report', 20, 25);
+    
+    // Timestamp
+    const timestamp = new Date().toLocaleString();
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Generated on: ${timestamp}`, 20, 35);
+    
+    let yPos = 50;
+    
+    // Optimal Location Details (Highlighted)
+    doc.setFillColor(39, 174, 96); // Green background
+    doc.rect(15, yPos - 5, 180, 25, 'F');
+    doc.setTextColor(255, 255, 255); // White text
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('🎯 OPTIMAL LOCATION', 20, yPos + 5);
+    
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Coordinates: ${optimalLocation.lat.toFixed(6)}, ${optimalLocation.lon.toFixed(6)}`, 20, yPos + 12);
+    doc.text(`Average Weighted Distance: ${optimalLocation.avgWeightedDistance.toFixed(2)} km`, 20, yPos + 18);
+    
+    yPos += 35;
+    doc.setTextColor(0, 0, 0); // Reset to black
+    
+    // Map Image
+    try {
+        const mapImage = await captureMapAsImage();
+        doc.addImage(mapImage, 'PNG', 20, yPos, 170, 113); // Maintain aspect ratio
+        yPos += 125;
+    } catch (error) {
+        console.error('Could not capture map:', error);
+        doc.setFontSize(10);
+        doc.text('Map visualization not available', 20, yPos);
+        yPos += 15;
+    }
+    
+    // Destinations Table
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('📍 Destinations Summary', 20, yPos);
+    yPos += 10;
+    
+    // Table headers
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('ID', 20, yPos);
+    doc.text('Name', 35, yPos);
+    doc.text('Weight', 100, yPos);
+    doc.text('Distance from Optimal', 130, yPos);
+    doc.text('Weighted Impact', 175, yPos);
+    
+    // Table header line
+    doc.line(15, yPos + 2, 195, yPos + 2);
+    yPos += 8;
+    
+    // Table rows
+    doc.setFont(undefined, 'normal');
+    destinations.forEach((dest, index) => {
+        const distance = haversineDistance(optimalLocation.lat, optimalLocation.lon, dest.lat, dest.lon);
+        const letter = String.fromCharCode(65 + index);
+        
+        doc.text(letter, 20, yPos);
+        doc.text(dest.name.length > 15 ? dest.name.substring(0, 15) + '...' : dest.name, 35, yPos);
+        doc.text(dest.weight.toString(), 100, yPos);
+        doc.text(`${distance.toFixed(2)} km`, 130, yPos);
+        doc.text(`${(distance * dest.weight).toFixed(2)}`, 175, yPos);
+        yPos += 6;
+    });
+    
+    // Analysis Summary
+    yPos += 10;
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text('📊 Analysis Summary', 20, yPos);
+    yPos += 8;
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Total destinations analyzed: ${destinations.length}`, 20, yPos);
+    yPos += 5;
+    doc.text(`Optimization method: Iterative grid search with adaptive refinement`, 20, yPos);
+    yPos += 5;
+    doc.text(`Search resolution: Up to 100-meter precision`, 20, yPos);
+    
+    // Footer
+    const footerY = 280;
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'italic');
+    doc.text('Generated by Optimal Location Finder', 20, footerY);
+    doc.text(`Visit: ${window.location.origin}${window.location.pathname}`, 20, footerY + 4);
+    
+    // Save PDF
+    const reportTimestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+    doc.save(`optimal_location_report_${reportTimestamp}.pdf`);
+}
+
+        
 
 function importResults(event) {
     const file = event.target.files[0];
@@ -1311,151 +1475,6 @@ function importResults(event) {
     reader.readAsText(file);
 }
 
-      
-downloadReportBtn.addEventListener('click', async () => {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const siteUrl = window.location.href;
-    const destinations = getDestinations();
-    const resultsDiv = document.getElementById('resultsContent');
-    const resultsText = resultsDiv.innerText.replace(/[^\x00-\x7F]/g, '');
-
-    // Header
-    doc.setFontSize(20);
-    doc.setTextColor(0, 51, 102);
-    doc.text('Optimal Location Finder Report', 105, 20, { align: 'center' });
-
-    // 📸 Add map image just below the title
-    // ⏳ Ensure Leaflet has time to fully render everything (especially heatmap layers)
-map.invalidateSize(); // Adjust size in case of layout shifts
-
-// Fit to all key points (destinations + optimal)
-const bounds = L.latLngBounds([
-    ...window.destinations.map(d => [d.lat, d.lon]),
-    [window.optimalLocation.lat, window.optimalLocation.lon]
-]);
-map.fitBounds(bounds, { padding: [20, 20] });
-
-// Delay to let browser re-render the heatmap and circles before screenshot
-await new Promise(resolve => setTimeout(resolve, 500));
-
-
-// 📸 Capture map
-const mapCanvas = await html2canvas(document.getElementById('map'), {
-    useCORS: true
-});
-const mapImgData = mapCanvas.toDataURL('image/png');
-
-// 🧮 Maintain aspect ratio
-const imgProps = doc.getImageProperties(mapImgData);
-const pdfWidth = 180; // max width within margins
-const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-// 🖼️ Add image to PDF
-doc.addImage(mapImgData, 'PNG', 15, 30, pdfWidth, pdfHeight);
-
-// 📏 Set vertical offset for next section
-let yOffset = 30 + pdfHeight + 10;
-
-//    let yOffset = 125; // Start below the image
-
-    // Destinations Table
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text('Destinations and Weights:', 20, yOffset);
-    yOffset += 10;
-
-    doc.autoTable({
-        head: [['#', 'Destination', 'Weight']],
-        body: destinations.map((d, i) => [i + 1, d.destination, d.weight]),
-        startY: yOffset,
-        theme: 'grid',
-        headStyles: { fillColor: [102, 126, 234] }
-    });
-
-    yOffset = doc.lastAutoTable.finalY + 10;
-
-    // Results
-    doc.text('Results:', 20, yOffset + 10);
-    yOffset += 20;
-    doc.setFontSize(10);
-// Extract optimal location
-const optimalLoc = destinations.length > 0 && window.optimalLocation
-    ? {
-        lat:  window.optimalLocation.lat.toFixed(6),
-        lon:  window.optimalLocation.lon.toFixed(6),
-        avgDist:  window.optimalLocation.avgWeightedDistance.toFixed(2)
-    } : null;
-
-// Insert prominent optimal info below map
-if (optimalLoc) {
-    doc.setFontSize(12);
-    doc.setTextColor(0, 102, 51);
-    doc.setFont(undefined, 'bold');
-    doc.text(`🎯 Optimal Location Coordinates: ${optimalLoc.lat}, ${optimalLoc.lon}`, 20, yOffset);
-    doc.text(`📏 Average Weighted Distance: ${optimalLoc.avgDist} km`, 20, yOffset + 10);
-    yOffset += 25;
-}
-
-// Then show table of results
-doc.setFont(undefined, 'normal');
-doc.setTextColor(0, 0, 0);
-doc.text('Results:', 20, yOffset);
-
-yOffset += 5;
-
-const resultTable = window.destinations.map((dest, i) => {
-  const dist = haversineDistance(
-    window.optimalLocation.lat,
-    window.optimalLocation.lon,
-    dest.lat,
-    dest.lon
-  ).toFixed(2);
-
-  const weighted = (dist * dest.weight).toFixed(2);
-  return [
-    i + 1,
-    dest.name || dest.destination || 'Unnamed',
-    `${dist} km`,
-    dest.weight,
-    `${weighted} km·w`
-  ];
-});
-
-
-doc.autoTable({
-    head: [['#', 'Destination', 'Distance from Optimal', 'Weight', 'Weighted Contribution']],
-    body: resultTable,
-    startY: yOffset + 10,
-    theme: 'striped',
-    headStyles: { fillColor: [102, 126, 234] }
-});
-
-yOffset = doc.lastAutoTable.finalY + 10;
-
-
-    
-    // Footer
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Generated by Optimal Location Finder - ${siteUrl}`, 105, 280, { align: 'center' });
-    doc.text('Try it yourself at our website!', 105, 288, { align: 'center' });
-
-    // Save PDF
-    const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-    doc.save(`Optimal_Location_Report_${timestamp}.pdf`);
-
-});
-
-
-        
-function getDestinations() {
-    const entries = document.querySelectorAll('.destination-item');
-    return Array.from(entries).map(entry => ({
-        destination: entry.querySelector('.location-input')?.value || 'Unnamed',
-        weight: entry.querySelector('.weight-input')?.value || 1
-    }));
-}
 
 
         
