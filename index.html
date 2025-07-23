@@ -392,6 +392,7 @@ let userCurrentLon = 77.5946; // Default to Bangalore, India (your current locat
         };
         let destinationCounter = 0;
         let geocodeTimeouts = {};
+        let isGeneratingReport = false;
         
         // Initialize map
 
@@ -1177,32 +1178,69 @@ if (optimalLocation.heatmapPoints && optimalLocation.heatmapPoints.length > 0) {
 function captureMapAsImage() {
     return new Promise((resolve, reject) => {
         if (!map) {
-            reject(new Error('Map not available'));
+            console.warn('Map not available, using placeholder');
+            resolve(createMapPlaceholder());
             return;
         }
         
-        try {
-            // Use leaflet-image to capture the actual map
-            leafletImage(map, function(err, canvas) {
-                if (err) {
-                    console.error('Error capturing map:', err);
-                    // Fallback to placeholder
+        // Wait for map to be ready and tiles to load
+        const captureWhenReady = () => {
+            try {
+                // Set a timeout to prevent infinite waiting
+                const timeoutId = setTimeout(() => {
+                    console.warn('Map capture timeout, using placeholder');
                     resolve(createMapPlaceholder());
-                } else {
-                    // Add annotations to the captured map
-                    const annotatedCanvas = addMapAnnotations(canvas);
-                    resolve(annotatedCanvas.toDataURL('image/png'));
-                }
+                }, 5000); // 5 second timeout
+                
+                leafletImage(map, function(err, canvas) {
+                    clearTimeout(timeoutId);
+                    
+                    if (err) {
+                        console.error('Error capturing map:', err);
+                        resolve(createMapPlaceholder());
+                    } else {
+                        try {
+                            const annotatedCanvas = addMapAnnotations(canvas);
+                            resolve(annotatedCanvas.toDataURL('image/png'));
+                        } catch (annotationError) {
+                            console.error('Error adding annotations:', annotationError);
+                            resolve(canvas.toDataURL('image/png')); // Return without annotations
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Leaflet-image error:', error);
+                resolve(createMapPlaceholder());
+            }
+        };
+        
+        // Check if map is ready
+        if (map._loaded) {
+            // Small delay to ensure tiles are rendered
+            setTimeout(captureWhenReady, 500);
+        } else {
+            // Wait for map to load
+            map.once('load', () => {
+                setTimeout(captureWhenReady, 500);
             });
-        } catch (error) {
-            console.error('Leaflet-image error:', error);
-            // Fallback to placeholder
-            resolve(createMapPlaceholder());
         }
     });
 }
-
 function addMapAnnotations(originalCanvas) {
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = originalCanvas.width;
+        canvas.height = originalCanvas.height;
+        const ctx = canvas.getContext('2d');
+        
+        // Draw the original map
+        ctx.drawImage(originalCanvas, 0, 0);
+        
+        // Check if map is still available
+        if (!map || !map.getBounds) {
+            return canvas; // Return without annotations
+        } 
+    
     // Create a new canvas with the same dimensions
     const canvas = document.createElement('canvas');
     canvas.width = originalCanvas.width;
@@ -1306,6 +1344,10 @@ function addMapAnnotations(originalCanvas) {
     }
     
     return canvas;
+    } catch (error) {
+        console.error('Error adding map annotations:', error);
+        return originalCanvas; // Return original canvas without annotations
+    }
 }
 
 function createMapPlaceholder() {
@@ -1396,14 +1438,22 @@ function checkPageBreak(doc, currentY, requiredSpace = 20) {
 }
 
         
-async function downloadReport() {
+async function downloadReport() {    
     if (!optimalLocation || destinations.length === 0) {
         alert('No results to generate report');
         return;
     }
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    
+    if (isGeneratingReport) {
+        alert('Report is already being generated. Please wait...');
+        return;
+    }
+    
+    isGeneratingReport = true;
+    
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
     
     // Title
     doc.setFontSize(20);
@@ -1436,17 +1486,17 @@ doc.text(`Visit: ${window.location.origin}${window.location.pathname}`, 20, 49);
     yPos += 35;
     doc.setTextColor(0, 0, 0); // Reset to black
 
-// Map Image
-try {
-    const mapImage = await captureMapAsImage();
-    doc.addImage(mapImage, 'PNG', 20, yPos, 170, 113);
-    yPos += 125;
-} catch (error) {
-    console.error('Could not capture map:', error);
-    doc.setFontSize(10);
-    doc.text('Map visualization not available', 20, yPos);
-    yPos += 15;
-}
+        // Map Image with better error handling
+        try {
+            const mapImage = await captureMapAsImage();
+            doc.addImage(mapImage, 'PNG', 20, yPos, 170, 113);
+            yPos += 125;
+        } catch (error) {
+            console.error('Could not capture map:', error);
+            doc.setFontSize(10);
+            doc.text('Map visualization not available', 20, yPos);
+            yPos += 15;
+        }
 
 // Check if we need a new page for the table
 yPos = checkPageBreak(doc, yPos, 30);
@@ -1502,9 +1552,16 @@ destinations.forEach((dest, index) => {
     doc.text(`Search resolution: Up to 100-meter precision`, 20, yPos);
     
     
-    // Save PDF
-    const reportTimestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-    doc.save(`optimal_location_report_${reportTimestamp}.pdf`);
+        // Save PDF
+        const reportTimestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+        doc.save(`optimal_location_report_${reportTimestamp}.pdf`);
+        
+    } catch (error) {
+        console.error('Error generating report:', error);
+        alert('Error generating report. Please try again.');
+    } finally {
+        isGeneratingReport = false;
+    }
 }
 
         
