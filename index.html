@@ -375,9 +375,7 @@
         </div>
     </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <script>
         let map;
 let userCurrentLat = 12.9716; // Default to Bangalore, India (your current location)
@@ -1395,12 +1393,17 @@ doc.text(`Visit: ${window.location.origin}${window.location.pathname}`, 20, 49);
     doc.setTextColor(0, 0, 0); // Reset to black
     
     // Map Image
-html2canvas(document.getElementById('map')).then(canvas => {
-            const imgData = canvas.toDataURL('image/png');
-            doc.addImage(imgData, 'PNG', 20, yPos, 170, 113); // Add map image to PDF
-            yPos += 125;       
-            });
-    
+    try {
+        const mapImage = await captureMapAsImage();
+        doc.addImage(mapImage, 'PNG', 20, yPos, 170, 113); // Maintain aspect ratio
+        yPos += 125;
+    } catch (error) {
+        console.error('Could not capture map:', error);
+        doc.setFontSize(10);
+        doc.text('Map visualization not available', 20, yPos);
+        yPos += 15;
+    }
+
 // Check if we need a new page for the table
 yPos = checkPageBreak(doc, yPos, 30);
     
