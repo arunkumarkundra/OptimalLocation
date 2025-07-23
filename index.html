@@ -1272,7 +1272,10 @@ doc.text(`Visit: ${window.location.origin}${window.location.pathname}`, 20, 49);
 // Map 
         // 📸 Add map image just below the title
     map.invalidateSize();
-
+    
+    // **Add a small delay to ensure the map finishes rendering before capture**
+    await new Promise(resolve => setTimeout(resolve, 300)); // 300ms delay
+    
 // 📸 Capture map
 const mapCanvas = await html2canvas(document.getElementById('map'), {
     useCORS: true
