@@ -1181,14 +1181,21 @@ function captureMapAsImage() {
         canvas.height = 400;
         const ctx = canvas.getContext('2d');
         
-        // Create a simple map representation with better visibility
-        ctx.fillStyle = '#f0f8ff';
-        ctx.fillRect(0, 0, 600, 400);
-        
-        // Add border
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(0, 0, 600, 400);
+// Create a map-like background
+ctx.fillStyle = '#a8d8f0'; // Light blue like water/ocean
+ctx.fillRect(0, 0, 600, 400);
+
+// Add some landmass-like shapes for better map appearance
+ctx.fillStyle = '#d4c5b9'; // Light brown for land
+ctx.fillRect(50, 80, 200, 150);
+ctx.fillRect(300, 120, 180, 100);
+ctx.fillRect(120, 250, 150, 80);
+
+// Add border
+ctx.strokeStyle = '#2c3e50';
+ctx.lineWidth = 3;
+ctx.strokeRect(0, 0, 600, 400);
+
         
         // Add title with better contrast
         ctx.fillStyle = '#2c3e50';
@@ -1262,10 +1269,30 @@ function captureMapAsImage() {
                 ctx.lineWidth = 3;
                 ctx.stroke();
                 
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 16px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('*', x, y + 5);
+                // Draw a proper star shape
+ctx.fillStyle = '#fff';
+ctx.beginPath();
+// Star points (5-pointed star)
+const starSize = 8;
+for (let i = 0; i < 5; i++) {
+    const angle1 = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+    const angle2 = ((i + 1) * 4 * Math.PI) / 5 - Math.PI / 2;
+    const x1 = x + Math.cos(angle1) * starSize;
+    const y1 = y + Math.sin(angle1) * starSize;
+    const x2 = x + Math.cos(angle1 + Math.PI / 5) * (starSize * 0.4);
+    const y2 = y + Math.sin(angle1 + Math.PI / 5) * (starSize * 0.4);
+    
+    if (i === 0) ctx.moveTo(x1, y1);
+    else ctx.lineTo(x1, y1);
+    ctx.lineTo(x2, y2);
+}
+ctx.closePath();
+ctx.fill();
+
+// Add yellow outline for better visibility
+ctx.strokeStyle = '#f1c40f';
+ctx.lineWidth = 1;
+ctx.stroke();
             }
         }
         
@@ -1376,6 +1403,9 @@ doc.text(`Visit: ${window.location.origin}${window.location.pathname}`, 20, 49);
         doc.text('Map visualization not available', 20, yPos);
         yPos += 15;
     }
+
+// Check if we need a new page for the table
+yPos = checkPageBreak(doc, yPos, 30);
     
     // Destinations Table
     doc.setFontSize(14);
@@ -1397,18 +1427,20 @@ doc.text(`Visit: ${window.location.origin}${window.location.pathname}`, 20, 49);
     yPos += 8;
     
     // Table rows
-    doc.setFont(undefined, 'normal');
-    destinations.forEach((dest, index) => {
-        const distance = haversineDistance(optimalLocation.lat, optimalLocation.lon, dest.lat, dest.lon);
-        const letter = String.fromCharCode(65 + index);
-        
-        doc.text(letter, 20, yPos);
-        doc.text(dest.name.length > 15 ? dest.name.substring(0, 15) + '...' : dest.name, 35, yPos);
-        doc.text(dest.weight.toString(), 100, yPos);
-        doc.text(`${distance.toFixed(2)} km`, 130, yPos);
-        doc.text(`${(distance * dest.weight).toFixed(2)}`, 175, yPos);
-        yPos += 6;
-    });
+    doc.setFont(undefined, 'normal'); 
+destinations.forEach((dest, index) => {
+    yPos = checkPageBreak(doc, yPos, 8);
+    const distance = haversineDistance(optimalLocation.lat, optimalLocation.lon, dest.lat, dest.lon);
+    const letter = String.fromCharCode(65 + index);
+    
+    doc.text(letter, 20, yPos);
+    doc.text(dest.name.length > 15 ? dest.name.substring(0, 15) + '...' : dest.name, 35, yPos);
+    doc.text(dest.weight.toString(), 100, yPos);
+    doc.text(`${distance.toFixed(2)} km`, 130, yPos);
+    doc.text(`${(distance * dest.weight).toFixed(2)}`, 175, yPos);
+    yPos += 6;
+});
+    
     
     // Analysis Summary
     yPos += 10;
