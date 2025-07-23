@@ -7,6 +7,8 @@
     <title>Optimal Location Finder</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -1266,7 +1268,28 @@ doc.text(`Visit: ${window.location.origin}${window.location.pathname}`, 20, 49);
     
     yPos += 35;
     doc.setTextColor(0, 0, 0); // Reset to black
-    
+// Map 
+        // 📸 Add map image just below the title
+    map.invalidateSize();
+
+// 📸 Capture map
+const mapCanvas = await html2canvas(document.getElementById('map'), {
+    useCORS: true
+});
+const mapImgData = mapCanvas.toDataURL('image/png');
+
+// 🧮 Maintain aspect ratio
+const imgProps = doc.getImageProperties(mapImgData);
+const pdfWidth = 180; // max width within margins
+const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+// 🖼️ Add image to PDF
+doc.addImage(mapImgData, 'PNG', 15, yPos, pdfWidth, pdfHeight);
+
+// 📏 Set vertical offset for next section
+yPos += pdfHeight + 10;
+
+
 
 // Check if we need a new page for the table
 yPos = checkPageBreak(doc, yPos, 30);
