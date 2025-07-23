@@ -1273,15 +1273,21 @@ doc.text(`Visit: ${window.location.origin}${window.location.pathname}`, 20, 49);
         // 📸 Add map image just below the title
     map.invalidateSize();
     
-    // **Add a small delay to ensure the map finishes rendering before capture**
-    await new Promise(resolve => setTimeout(resolve, 300)); // 300ms delay
+    // **Step 1: Temporarily remove the heatmap layer before capturing**
+    layerGroups.grid.removeFrom(map);
+
+    // Add a very short delay to allow the DOM to update after layer removal
+    await new Promise(resolve => setTimeout(resolve, 50)); 
     
 // 📸 Capture map
 const mapCanvas = await html2canvas(document.getElementById('map'), {
     useCORS: true
 });
 const mapImgData = mapCanvas.toDataURL('image/png');
+    // **Step 2: Add the heatmap layer back to the map after capturing**
+    layerGroups.grid.addTo(map);
 
+    
 // 🧮 Maintain aspect ratio
 const imgProps = doc.getImageProperties(mapImgData);
 const pdfWidth = 180; // max width within margins
