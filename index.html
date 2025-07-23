@@ -35,343 +35,286 @@
         }
 
         .header h1 {
-            color: #2c3e50;
-            font-size: 2.8rem;
-            font-weight: 700;
+            color: #333;
+            font-size: 2.5em;
             margin-bottom: 10px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
 
         .header p {
-            color: #7f8c8d;
-            font-size: 1.1rem;
-            max-width: 600px;
-            margin: 0 auto;
+            color: #555;
+            font-size: 1.1em;
         }
 
         .main-content {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
+            display: flex;
             gap: 30px;
-            align-items: start;
         }
 
-        .input-section {
-            background: white;
-            padding: 25px;
+        .left-panel, .right-panel {
+            background: #fff;
             border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(102, 126, 234, 0.1);
+            padding: 25px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
         }
 
-        .input-section h2 {
-            color: #2c3e50;
+        .left-panel {
+            flex: 2;
+        }
+
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #4a4a4a;
             margin-bottom: 20px;
-            font-size: 1.5rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
         }
 
-        .destination-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
+        .destination-input-group {
+            display: flex;
+            align-items: center;
             margin-bottom: 15px;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
+            position: relative;
         }
-        
 
-        .destination-item:hover {
+        .destination-input-group input[type="text"] {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .destination-input-group input[type="text"]:focus {
             border-color: #667eea;
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+            outline: none;
         }
 
-        .destination-inputs {
-            display: grid;
-            grid-template-columns: 2fr 2fr 1fr;
-            gap: 10px;
-            margin-bottom: 10px;
+        .destination-input-group input[type="number"] {
+            width: 80px;
+            padding: 12px;
+            margin-left: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1em;
         }
 
-        .destination-inputs input {
-            padding: 10px;
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: white;
             border: 1px solid #ddd;
             border-radius: 8px;
-            font-size: 0.9rem;
-            transition: border-color 0.3s ease;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
-        .destination-inputs input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        .autocomplete-dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #333;
         }
 
-.autocomplete-container {
-    position: relative;
-}
+        .autocomplete-dropdown-item:hover {
+            background-color: #f0f0f0;
+        }
 
-.autocomplete-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid #ddd;
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1000;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-.autocomplete-option {
-    padding: 12px;
-    cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background 0.2s;
-}
-
-.autocomplete-option:hover {
-    background: #f8f9fa;
-}
-
-.autocomplete-option:last-child {
-    border-bottom: none;
-}
-
-.destination-label {
-    margin-top: 10px;
-    font-weight: 600;
-    color: #667eea;
-}
-
-.dest-letter {
-    display: inline-block;
-    width: 25px;
-    height: 25px;
-    background: #667eea;
-    color: white;
-    text-align: center;
-    line-height: 25px;
-    border-radius: 50%;
-    font-size: 0.9rem;
-}
-        
-        .weight-input {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            font-weight: 600;
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
         }
 
         .btn {
-            padding: 12px 24px;
+            padding: 12px 25px;
             border: none;
             border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-size: 1.05em;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.2s;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background-color: #667eea;
             color: white;
         }
 
         .btn-primary:hover {
+            background-color: #5a6cd9;
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
 
-        .btn-primary:not(:last-child) {
-            margin-right: 0;
-        }
-        
         .btn-secondary {
-            background: #e74c3c;
-            color: white;
-            font-size: 0.8rem;
-            padding: 8px 16px;
+            background-color: #f0f2f5;
+            color: #333;
+            border: 1px solid #ddd;
         }
 
         .btn-secondary:hover {
-            background: #c0392b;
-        }
-
-        .btn-success {
-            background: #27ae60;
-            color: white;
-            width: 100%;
-            margin: 20px 0;
-            font-size: 1rem;
-            padding: 15px;
-        }
-
-        .btn-success:hover {
-            background: #229954;
+            background-color: #e0e2e5;
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-add {
+            background-color: #28a745;
+            color: white;
+            flex-grow: 1;
+        }
+
+        .btn-add:hover {
+            background-color: #218838;
+        }
+
+        .btn-remove {
+            background-color: #dc3545;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin-left: 10px;
+            font-size: 0.9em;
+        }
+
+        .btn-remove:hover {
+            background-color: #c82333;
+        }
+
+        #destinationsList {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px; /* For scrollbar */
+        }
+
+        .destination-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed #eee;
+            font-size: 0.95em;
+            color: #555;
+        }
+
+        .destination-item:last-child {
+            border-bottom: none;
+        }
+
+        .map-container {
+            flex-grow: 1;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
         }
 
         #map {
-            height: 600px;
+            height: 100%;
+            min-height: 500px; /* Ensure map has a visible height */
             border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            border: 3px solid rgba(102, 126, 234, 0.1);
         }
 
         .results-section {
-            margin-top: 20px;
-            padding: 20px;
-            background: white;
+            background: #fff;
             border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            margin-top: 20px; /* Space between map and results if stacked */
         }
 
-        .results-section h3 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 1.3rem;
+        #results {
+            font-size: 1.1em;
+            color: #333;
         }
 
-        .result-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border-left: 4px solid #667eea;
+        #results p {
+            margin-bottom: 8px;
         }
 
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
+        #results strong {
             color: #667eea;
-            font-weight: 600;
         }
 
-        .loading.show {
-            display: block;
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #f0f2f5;
+            font-size: 0.9em;
         }
 
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .controls {
-            margin-top: 20px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .control-group label {
-            font-size: 0.9rem;
-            color: #2c3e50;
-            font-weight: 600;
-        }
-
-        .control-group input, .control-group select {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 0.9rem;
-        }
-
-        @media (max-width: 1024px) {
+        @media (max-width: 992px) {
             .main-content {
-                grid-template-columns: 1fr;
+                flex-direction: column;
             }
-            
-            .destination-inputs {
-                grid-template-columns: 1fr;
-            }
-            
-            .header h1 {
-                font-size: 2.2rem;
+            .right-panel {
+                order: -1; /* Move map to top on smaller screens */
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🏠 Optimal Location Finder</h1>
-            <p>Find the perfect location based on your frequent destinations. Enter locations you visit regularly with their importance weights.</p>
-        </div>
+        <header class="header">
+            <h1>📍 Optimal Location Finder</h1>
+            <p>Find the best central point based on multiple weighted destinations.</p>
+        </header>
 
         <div class="main-content">
-            <div class="input-section">
-                <h2>📍 Destinations</h2>
-<div style="display: flex; justify-content: flex-end; margin-top: -10px;">
-    <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importResults(event)">
-    <button
-        onclick="document.getElementById('importFile').click()"
-        style="padding: 4px 10px; font-size: 12px; background-color: #ddd; color: #333; border: 1px solid #bbb; border-radius: 4px; cursor: pointer;">
-        📂 Import Data
-    </button>
-</div>
-
-
-                
-                <div id="destinationsContainer">
-                    <div class="destination-item">
-<div class="destination-inputs">
-    <div class="autocomplete-container">
-        <input type="text" placeholder="Address, place name, or coordinates" class="location-input">
-        <div class="autocomplete-dropdown" style="display: none;"></div>
-    </div>
-    <input type="text" placeholder="Name (optional)" class="name-input">
-    <input type="number" min="0.1" step="0.1" value="1.0" class="weight-input" placeholder="Weight">
-</div>
-<div class="destination-label">Destination: <span class="dest-letter">A</span></div>
-                        <button class="btn btn-secondary remove-destination">Remove</button>
+            <div class="left-panel">
+                <h2 class="section-title">Add Destinations</h2>
+                <div id="destinationInputs">
+                    <div class="destination-input-group">
+                        <input type="text" class="location-input" placeholder="Enter destination (e.g., 'Paris Eiffel Tower')" data-lat="" data-lon="">
+                        <input type="number" class="weight-input" value="1" min="1" title="Weight">
+                        <div class="autocomplete-dropdown"></div>
+                        <button class="btn btn-remove" onclick="removeDestination(this)">Remove</button>
                     </div>
                 </div>
-
-                <button class="btn btn-primary" onclick="addDestination()">+ Add Destination</button>
-                                
-                <button class="btn btn-success" onclick="findOptimalLocation()">🎯 Find Optimal Location</button>
-
-                <div class="loading" id="loading">
-                    <div class="spinner"></div>
-                    Calculating optimal location...
+                <button class="btn btn-add" onclick="addDestinationInput()">+ Add Another Destination</button>
+                
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="calculateOptimalLocation()">Calculate Optimal Location</button>
+                    <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
                 </div>
-
-                <div class="results-section" id="results" style="display: none;">
-                    <h3>📊 Results</h3>
-                    <div id="resultsContent"></div>
-                        <div style="display: flex; gap: 10px; margin-top: 15px;">
-                            <button class="btn btn-primary" onclick="exportResults()">📄 Export Results</button>
-                            <button class="btn btn-primary" onclick="downloadReport()">📊 Download Report</button>
-                        </div>
+                
+                <h2 class="section-title" style="margin-top: 30px;">Destination List</h2>
+                <div id="destinationsList">
+                    </div>
+                
+                <h2 class="section-title" style="margin-top: 30px;">Import/Export</h2>
+                <div class="button-group">
+                    <input type="file" id="importJson" accept=".json" style="display: none;" onchange="importDestinations(event)">
+                    <button class="btn btn-secondary" onclick="document.getElementById('importJson').click()">Import JSON</button>
+                    <button class="btn btn-secondary" onclick="exportDestinations()">Export JSON</button>
                 </div>
+                
             </div>
 
-            <div id="map"></div>
+            <div class="right-panel">
+                <div class="map-container">
+                    <h2 class="section-title" style="margin-bottom: 10px;">Location Map</h2>
+                    <div id="map"></div>
+                </div>
+                
+                <div class="results-section">
+                    <h2 class="section-title">Optimal Location Results</h2>
+                    <div id="results">
+                        <p>Enter destinations and click "Calculate Optimal Location" to see results.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="downloadReport()" style="margin-top: 20px;">Download Report (PDF)</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -379,1085 +322,620 @@
     <script src="https://unpkg.com/leaflet-image/leaflet-image.js"></script>
     <script>
         let map;
-let userCurrentLat = 12.9716; // Default to Bangalore, India (your current location)
-let userCurrentLon = 77.5946; // Default to Bangalore, India (your current location)
-        
+        let userCurrentLat = 12.9716; // Default to Bangalore, India (your current location)
+        let userCurrentLon = 77.5946;
+
         let destinations = [];
-        let gridPoints = [];
         let optimalLocation = null;
-        let layerGroups = {
-            destinations: L.layerGroup(),
-            grid: L.layerGroup(),
-            optimal: L.layerGroup()
-        };
-        let destinationCounter = 0;
-        let geocodeTimeouts = {};
-        
-        // Initialize map
+        let optimalMarker = null; // To keep track of the optimal location marker
+        let destinationMarkers = L.featureGroup(); // To manage destination markers easily
 
-function initMap() {
-    map = L.map('map').setView([userCurrentLat, userCurrentLon], 10); // Use default/user location
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-
-    // Add layer groups to map
-    Object.values(layerGroups).forEach(layer => layer.addTo(map));
-
-    // Attempt to get user's current location
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                userCurrentLat = position.coords.latitude;
-                userCurrentLon = position.coords.longitude;
-                map.setView([userCurrentLat, userCurrentLon], 13); // Set view to user's location with a closer zoom
-                L.marker([userCurrentLat, userCurrentLon], {
-                    icon: L.divIcon({
-                        html: `<div style="background: #3498db; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">🏠</div>`,
-                        iconSize: [30, 30],
-                        className: 'current-location-marker'
-                    })
-                }).addTo(map).bindPopup('Your Current Location');
-            },
-            (error) => {
-                console.warn('Geolocation error:', error);
-//                alert('Could not retrieve your location. Map will default to Bangalore for initial view and search bias.');
-            },
-            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-        );
-    } else {
-//        alert('Geolocation is not supported by your browser. Map will default to Bangalore for initial view and search bias.');
-    }
-}
-
-function computeOptimalLocation_Grid(destinations, cellThreshold = 100) {
-    if (destinations.length === 0) return null;
-    
-    // Handle edge case: single destination
-    if (destinations.length === 1) {
-        return { 
-            lat: destinations[0].lat, 
-            lon: destinations[0].lon,
-            avgWeightedDistance: 0,
-            heatmapPoints: [{lat: destinations[0].lat, lon: destinations[0].lon, score: 0}]
-        };
-    }
-    
-    // Handle edge case: two destinations - return weighted midpoint
-    if (destinations.length === 2) {
-        const totalWeight = destinations[0].weight + destinations[1].weight;
-        const weightedLat = (destinations[0].lat * destinations[0].weight + destinations[1].lat * destinations[1].weight) / totalWeight;
-        const weightedLon = (destinations[0].lon * destinations[0].weight + destinations[1].lon * destinations[1].weight) / totalWeight;
-        
-        // Calculate average weighted distance for this point
-        let totalWeightedDistance = 0;
-        for (const dest of destinations) {
-            const distance = haversineDistance(weightedLat, weightedLon, dest.lat, dest.lon);
-            totalWeightedDistance += distance * dest.weight;
-        }
-        const avgWeightedDistance = totalWeightedDistance / totalWeight;
-        
-        return {
-            lat: weightedLat,
-            lon: weightedLon,
-            avgWeightedDistance: avgWeightedDistance,
-            heatmapPoints: [{lat: weightedLat, lon: weightedLon, score: avgWeightedDistance}]
-        };
-    }
-
-    // For 3+ destinations, use grid-based approach
-    const lats = destinations.map(d => d.lat);
-    const lons = destinations.map(d => d.lon);
-    let minLat = Math.min(...lats);
-    let maxLat = Math.max(...lats);
-    let minLon = Math.min(...lons);
-    let maxLon = Math.max(...lons);
-
-    // Handle edge case: all points are very close (same lat or same lon)
-    const latRange = maxLat - minLat;
-    const lonRange = maxLon - minLon;
-    
-    if (latRange < 0.0001) { // Less than ~10m difference
-        const buffer = 0.001; // ~100m buffer
-        minLat -= buffer;
-        maxLat += buffer;
-    }
-    
-    if (lonRange < 0.0001) { // Less than ~10m difference  
-        const buffer = 0.001; // ~100m buffer
-        minLon -= buffer;
-        maxLon += buffer;
-    }
-
-    let iteration = 0;
-    let gridPoints = [];
-
-    while (iteration < 10) { // Safety limit
-        // Calculate current cell size in meters
-        const currentLatRange = maxLat - minLat;
-        const currentLonRange = maxLon - minLon;
-        const cellSizeLat = currentLatRange / 99; // 99 intervals for 100 points
-        const cellSizeLon = currentLonRange / 99;
-        
-        // Convert to approximate meters (more accurate conversion)
-        const avgLat = (minLat + maxLat) / 2;
-        const cellSizeMetersLat = cellSizeLat * 111320; // degrees to meters conversion
-        const cellSizeMetersLon = cellSizeLon * 111320 * Math.cos(avgLat * Math.PI / 180);
-        const avgCellSizeMeters = (cellSizeMetersLat + cellSizeMetersLon) / 2;
-
-        console.log(`Iteration ${iteration + 1}: Cell size ~${Math.round(avgCellSizeMeters)}m, Bounds: ${minLat.toFixed(4)}-${maxLat.toFixed(4)}, ${minLon.toFixed(4)}-${maxLon.toFixed(4)}`);
-
-        if (avgCellSizeMeters <= cellThreshold) {
-            console.log(`Converged at ${Math.round(avgCellSizeMeters)}m resolution`);
-            break;
-        }
-
-        // Generate 100x100 grid
-        gridPoints = [];
-        for (let i = 0; i < 100; i++) {
-            for (let j = 0; j < 100; j++) {
-                const lat = minLat + (i / 99) * currentLatRange;
-                const lon = minLon + (j / 99) * currentLonRange;
-                
-                // Calculate weighted distance score for this point
-                let totalWeightedDistance = 0;
-                let totalWeight = 0;
-                
-                for (const dest of destinations) {
-                    const distance = haversineDistance(lat, lon, dest.lat, dest.lon);
-                    totalWeightedDistance += distance * dest.weight;
-                    totalWeight += dest.weight;
-                }
-                
-                const avgWeightedDistance = totalWeightedDistance / totalWeight;
-                gridPoints.push({ lat, lon, score: avgWeightedDistance });
+        // Initialize Map
+        function initMap() {
+            if (map) {
+                map.remove();
             }
+            map = L.map('map').setView([userCurrentLat, userCurrentLon], 10); // Center on Bangalore
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add the feature group to the map
+            destinationMarkers.addTo(map);
+
+            // Add a marker for the current user location (optional)
+            L.marker([userCurrentLat, userCurrentLon]).addTo(map)
+                .bindPopup('Your Current Location')
+                .openPopup();
         }
 
-        // Sort by score (lower is better)
-        gridPoints.sort((a, b) => a.score - b.score);
-        
-        // Take top 10% points
-        const topPointsCount = Math.max(10, Math.ceil(gridPoints.length * 0.1)); // At least 10 points
-        const topPoints = gridPoints.slice(0, topPointsCount);
-        
-        // Find new bounding box around top points
-        const topLats = topPoints.map(p => p.lat);
-        const topLons = topPoints.map(p => p.lon);
-        const newMinLat = Math.min(...topLats);
-        const newMaxLat = Math.max(...topLats);
-        const newMinLon = Math.min(...topLons);
-        const newMaxLon = Math.max(...topLons);
-
-        // Add small buffer to ensure we don't lose the optimal point (5% buffer)
-        const newLatRange = newMaxLat - newMinLat;
-        const newLonRange = newMaxLon - newMinLon;
-        const latBuffer = Math.max(newLatRange * 0.05, cellSizeLat); // At least one cell buffer
-        const lonBuffer = Math.max(newLonRange * 0.05, cellSizeLon);
-        
-        minLat = newMinLat - latBuffer;
-        maxLat = newMaxLat + latBuffer;
-        minLon = newMinLon - lonBuffer;
-        maxLon = newMaxLon + lonBuffer;
-
-        iteration++;
-    }
-
-    // Return best point and heatmap data (top 5% for visualization)
-    const heatmapSize = Math.max(5, Math.ceil(gridPoints.length * 0.05)); // At least 5 points
-    const heatmapPoints = gridPoints.slice(0, heatmapSize);
-    
-    const optimal = gridPoints[0];
-    return {
-        lat: optimal.lat,
-        lon: optimal.lon,
-        avgWeightedDistance: optimal.score,
-        heatmapPoints: heatmapPoints
-    };
-}
-
-
-
-        
-function computeOptimalLocation_Weiszfeld(destinations, maxIterations = 100000, tolerance = 1e-7) {
-    if (destinations.length === 0) {
-        return null;
-    }
-    if (destinations.length === 1) {
-        return { lat: destinations[0].lat, lon: destinations[0].lon };
-    }
-
-    const totalWeight = destinations.reduce((sum, dest) => sum + dest.weight, 0);
-    let x = destinations.reduce((sum, dest) => sum + dest.lon * dest.weight, 0) / totalWeight;
-    let y = destinations.reduce((sum, dest) => sum + dest.lat * dest.weight, 0) / totalWeight;
-
-// returning weighted average itself without loop calculation 
-        return { lon: x, lat: y };
-    
-    for (let iter = 0; iter < maxIterations; iter++) {
-        let numLat = 0;
-        let numLon = 0;
-        let denom = 0;
-        let closeToPoint = false;
-
-        for (let i = 0; i < destinations.length; i++) {
-            const dest = destinations[i];
-            const dist = haversineDistance(y, x, dest.lat, dest.lon);
-
-            if (dist < tolerance) {
-                // Perturb slightly to avoid divide-by-zero and premature stopping
-                const perturbationFactor = tolerance * 10;
-                x += (Math.random() - 0.5) * perturbationFactor;
-                y += (Math.random() - 0.5) * perturbationFactor;
-                closeToPoint = true;
-                break;
-            }
-
-            const weightOverDist = dest.weight / dist;
-            numLon += dest.lon * weightOverDist;
-            numLat += dest.lat * weightOverDist;
-            denom += weightOverDist;
-        }
-
-        if (closeToPoint) {
-            continue; // Skip update, try again from perturbed position
-        }
-
-        const newX = numLon / denom;
-        const newY = numLat / denom;
-
-        const delta = haversineDistance(y, x, newY, newX);
-        x = newX;
-        y = newY;
-
-        if (delta < tolerance) {
-            break; // Converged
-        }
-    }
-
-    return { lon: x, lat: y };
-}
-
-
-        
-        
-        // Haversine distance calculation
-function haversineDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Earth's radius in km
-    const toRad = angle => angle * Math.PI / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-}
-
-
-
-        // Geocoding using Nominatim
-
-async function geocode(address, biasLat = null, biasLon = null) {
-    try {
-        let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1`;
-
-        // Prioritize passed bias, then user's current location, then default (Bangalore)
-        if (biasLat && biasLon) {
-            url += `&lat=${biasLat}&lon=${biasLon}&radius=50000`; // 50km radius
-        } else if (userCurrentLat && userCurrentLon) { // Use user's current location if available (even if it's the default Bangalore)
-            url += `&lat=${userCurrentLat}&lon=${userCurrentLon}&radius=100000`; // 100km radius around user/default
-        } else {
-            url += `&lat=12.9716&lon=77.5946&radius=100000`; // Fallback to Bangalore if all else fails (shouldn't be hit with global defaults)
-        }
-
-        const response = await fetch(url);
-        const data = await response.json();
-        if (data && data.length > 0) {
-            return {
-                lat: parseFloat(data[0].lat),
-                lon: parseFloat(data[0].lon),
-                display_name: data[0].display_name
-            };
-        }
-        throw new Error('Location not found');
-    } catch (error) {
-        console.error('Geocoding error:', error);
-        throw error;
-    }
-}
-
-        // Add destination input
-
- function addDestination() {
-    const container = document.getElementById('destinationsContainer');
-    const destinationItem = document.createElement('div');
-    const letter = getDestinationLetter(container.children.length);
-    
-    destinationItem.className = 'destination-item';
-    destinationItem.innerHTML = `
-        <div class="destination-inputs">
-            <div class="autocomplete-container">
-                <input type="text" placeholder="Address, place name, or coordinates" class="location-input">
-                <div class="autocomplete-dropdown" style="display: none;"></div>
-            </div>
-            <input type="text" placeholder="Name (optional)" class="name-input">
-            <input type="number" min="0.1" step="0.1" value="1.0" class="weight-input" placeholder="Weight">
-        </div>
-        <div class="destination-label">Destination: <span class="dest-letter">${letter}</span></div>
-        <button class="btn btn-secondary remove-destination">Remove</button>
-    `;
-    
-    container.appendChild(destinationItem);
-    updateAllDestinationMarkers();
-    destinationItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-
-    // Setup autocomplete for the new input
-    const input = destinationItem.querySelector('.location-input');
-    const dropdown = destinationItem.querySelector('.autocomplete-dropdown');
-    setupAutocomplete(input, dropdown);
-    
-    // Setup remove button event
-    const removeButton = destinationItem.querySelector('.remove-destination');
-    removeButton.addEventListener('click', function() {
-        removeDestination(this);
-    });
-}
-// Get letter for destination (A, B, C...)
-function getDestinationLetter(index) {
-    return String.fromCharCode(65 + index); // A=65, B=66, etc.
-}
-
-// Parse coordinates from string
-
-function parseCoordinates(input) {
-    // Match strictly: latitude, longitude (comma separated)
-    const coordRegex = /^\s*([-+]?\d{1,2}(?:\.\d+)?),\s*([-+]?\d{1,3}(?:\.\d+)?)\s*$/;
-    const match = input.trim().match(coordRegex);
-    
-    if (match) {
-        const lat = parseFloat(match[1]);
-        const lon = parseFloat(match[2]);
-
-        if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
-            return { lat, lon };
-        }
-    }
-    return null;
-}
-
-
-
-// Setup autocomplete for location input
-function setupAutocomplete(input, dropdown) {
-    let currentRequest = null;
-
-    input.addEventListener('input', function() {
-        const query = this.value.trim();
-        dropdown.style.display = 'none';
-
-        if (query.length < 3) return;
-
-        // Check if it's coordinates
-        const coords = parseCoordinates(query);
-        if (coords) {
-            showCoordinateOption(dropdown, coords, query);
-            return;
-        }
-
-        // Cancel previous request
-        if (currentRequest) {
-            clearTimeout(currentRequest);
-        }
-
-        // Debounce API calls
-        currentRequest = setTimeout(async () => {
-            try {
-                let searchUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8&addressdetails=1`;
-
-                let biasLat = userCurrentLat; // Start with user's current location as primary bias
-                let biasLon = userCurrentLon;
-
-                // Get the index of the current destination item
-                const destinationItem = input.closest('.destination-item');
-                const currentIndex = Array.from(destinationItem.parentElement.children).indexOf(destinationItem);
-
-                // For subsequent destinations (not the first one), use the previous destination as bias
-                if (currentIndex > 0) {
-                    const prevItem = destinationItem.previousElementSibling;
-                    const prevInput = prevItem ? prevItem.querySelector('.location-input') : null;
-                    if (prevInput && prevInput.getAttribute('data-lat') && prevInput.getAttribute('data-lon')) {
-                        biasLat = parseFloat(prevInput.getAttribute('data-lat'));
-                        biasLon = parseFloat(prevInput.getAttribute('data-lon'));
-                    }
-                }
-
-                // Apply bias if coordinates are valid
-                if (biasLat && biasLon) {
-                    searchUrl += `&lat=${biasLat}&lon=${biasLon}&radius=100000`; // 100km radius around bias point
-                } else {
-                    // Fallback to Bangalore if no user location or previous destination is available/valid
-                    searchUrl += `&lat=12.9716&lon=77.5946&radius=100000`;
-                }
-
-                const response = await fetch(searchUrl);
-                const results = await response.json();
-                showAutocompleteOptions(dropdown, results, input);
-            } catch (error) {
-                console.error('Autocomplete error:', error);
-            }
-        }, 300);
-    });
-
-    // Hide dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.style.display = 'none';
-        }
-    });
-}
-        
-// Show coordinate option in dropdown
-function showCoordinateOption(dropdown, coords, originalQuery) {
-    dropdown.innerHTML = `
-        <div class="autocomplete-option" data-lat="${coords.lat}" data-lon="${coords.lon}" data-name="${originalQuery}">
-            📍 Coordinates: ${coords.lat}, ${coords.lon}
-        </div>
-    `;
-    dropdown.style.display = 'block';
-    
-    // Add click event listener
-dropdown.querySelector('.autocomplete-option').addEventListener('click', function() {
-    const destinationItem = this.closest('.destination-item');
-    const input = destinationItem.querySelector('.location-input');
-    input.value = originalQuery;
-    input.setAttribute('data-lat', coords.lat);
-    input.setAttribute('data-lon', coords.lon);
-    input.setAttribute('data-display-name', originalQuery);
-    dropdown.style.display = 'none';
-    previewDestination(destinationItem, coords.lat, coords.lon, originalQuery);
-});
-}
-
-        
-// Show autocomplete options
-function showAutocompleteOptions(dropdown, results, input) {
-    if (results.length === 0) {
-        dropdown.style.display = 'none';
-        return;
-    }
-    
-    dropdown.innerHTML = results.map(result => `
-        <div class="autocomplete-option" data-lat="${result.lat}" data-lon="${result.lon}" data-name="${result.display_name}">
-            📍 ${result.display_name}
-        </div>
-    `).join('');
-    
-    dropdown.style.display = 'block';
-    
-    // Add click event listeners
-    dropdown.querySelectorAll('.autocomplete-option').forEach(option => {
-        option.addEventListener('click', function() {
-            const lat = this.getAttribute('data-lat');
-            const lon = this.getAttribute('data-lon');
-            const name = this.getAttribute('data-name');
-            selectLocation(lat, lon, name, this);
-        });
-    });
-}
-
-        
-// Select coordinate from dropdown
-function selectCoordinate(lat, lon, query, element) {
-    const input = element.closest('.destination-item').querySelector('.location-input');
-    input.value = query;
-    element.closest('.autocomplete-dropdown').style.display = 'none';
-    previewDestination(element.closest('.destination-item'), parseFloat(lat), parseFloat(lon), query);
-}
-
-// Select location from dropdown
-
-function selectLocation(lat, lon, displayName, element) {
-    const destinationItem = element.closest('.destination-item');
-    const input = destinationItem.querySelector('.location-input');
-    const dropdown = destinationItem.querySelector('.autocomplete-dropdown');
-    
-    input.value = displayName.length > 50 ? displayName.substring(0, 50) + '...' : displayName;
-    dropdown.style.display = 'none';
-    
-    // Store coordinates as data attributes
-    input.setAttribute('data-lat', lat);
-    input.setAttribute('data-lon', lon);
-    input.setAttribute('data-display-name', displayName);
-    
-    previewDestination(destinationItem, parseFloat(lat), parseFloat(lon), displayName);
-}
-        
-
-        
-        
-// Preview destination on map
-
-function previewDestination(destinationItem, lat, lon, displayName) {
-    const destIndex = Array.from(destinationItem.parentElement.children).indexOf(destinationItem);
-    const letter = getDestinationLetter(destIndex);
-
-    // ✅ Force-save lat/lon/display_name into the input's dataset
-    const input = destinationItem.querySelector('.location-input');
-    input.setAttribute('data-lat', lat);
-    input.setAttribute('data-lon', lon);
-    input.setAttribute('data-display-name', displayName);
-
-    // Remove existing preview for this destination
-    layerGroups.destinations.eachLayer(layer => {
-        if (layer.options && layer.options.destIndex === destIndex) {
-            layerGroups.destinations.removeLayer(layer);
-        }
-    });
-
-    // Add new preview marker
-    const marker = L.marker([lat, lon], {
-        icon: L.divIcon({
-            html: `<div style="background: #e74c3c; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">${letter}</div>`,
-            iconSize: [30, 30],
-            className: 'preview-marker'
-        }),
-        destIndex: destIndex
-    }).bindPopup(`<strong>Preview: ${letter}</strong><br><small>${displayName}</small>`);
-
-    layerGroups.destinations.addLayer(marker);
-    map.setView([lat, lon], Math.max(map.getZoom(), 12));
-}
-
-        
-        // Remove destination input
-
-function updateAllDestinationMarkers() {
-    layerGroups.destinations.clearLayers(); // Clear all destination markers
-
-    const container = document.getElementById('destinationsContainer');
-    const items = container.querySelectorAll('.destination-item');
-
-    items.forEach((item, index) => {
-        const locationInput = item.querySelector('.location-input');
-        const lat = parseFloat(locationInput.getAttribute('data-lat'));
-        const lon = parseFloat(locationInput.getAttribute('data-lon'));
-        const displayName = locationInput.getAttribute('data-display-name');
-        
-        // Update label in DOM
-        item.querySelector('.dest-letter').textContent = getDestinationLetter(index);
-
-        if (lat && lon && displayName) {
-            previewDestination(item, lat, lon, displayName);
-        }
-    });
-}
-
-
-        
-function removeDestination(button) {
-    const container = document.getElementById('destinationsContainer');
-    if (container.children.length > 1) {
-        button.parentElement.remove();
-        updateAllDestinationMarkers();  // Re-render all markers
-    }
-}
-
-
-        
-
-        // Get color based on weighted distance (green = better, red = worse)
-        function getColorForDistance(distance, minDist, maxDist) {
-            const normalized = (distance - minDist) / (maxDist - minDist);
-            // const hue = (1 - normalized) * 120; // 120 = green, 0 = red
-            // return `hsl(${hue}, 70%, 50%)`;
-
-            const hue = (1 - normalized) * 120;
-            return `hsl(${hue}, 90%, 45%)`; // Brighter, punchier color
-        }
-
-        // Main function to find optimal location
-        async function findOptimalLocation() {
-            document.getElementById('loading').classList.add('show');
-            document.getElementById('results').style.display = 'none';
-            
-            try {
-                // Clear previous results
-                Object.values(layerGroups).forEach(layer => layer.clearLayers());
-                
-                // Collect destinations
-                destinations = [];
-                const destinationItems = document.querySelectorAll('.destination-item');
-
-
-for (let item of destinationItems) {
-    const locationInput = item.querySelector('.location-input');
-    const location = locationInput.value.trim();
-    const name = item.querySelector('.name-input').value.trim() || location;
-    const weight = parseFloat(item.querySelector('.weight-input').value) || 1.0;
-    
-    if (location) {
-        // Check if coordinates are already stored
-        const storedLat = locationInput.getAttribute('data-lat');
-        const storedLon = locationInput.getAttribute('data-lon');
-        const storedDisplayName = locationInput.getAttribute('data-display-name');
-        
-        if (storedLat && storedLon) {
-            // Use stored coordinates
-            destinations.push({
-                name: name,
-                location: location,
-                lat: parseFloat(storedLat),
-                lon: parseFloat(storedLon),
-                weight: weight,
-                display_name: storedDisplayName || location
-            });
-        } else {
-            // Fallback to geocoding if no stored coordinates
-            try {
-                const coords = await geocode(location);
-                destinations.push({
-                    name: name,
-                    location: location,
-                    lat: coords.lat,
-                    lon: coords.lon,
-                    weight: weight,
-                    display_name: coords.display_name
-                });
-            } catch (error) {
-                alert(`Could not find location: ${location}`);
-                continue;
-            }
-        }
-    }
-}
-                
-
-                if (destinations.length < 1) {
-                    alert('Please add at least one valid destination');
+        // Setup Autocomplete
+        function setupAutocomplete(inputElement, dropdownElement) {
+            let currentRequest = null; // To cancel previous requests
+
+            inputElement.addEventListener('input', async function() {
+                const query = this.value;
+                if (query.length < 3) {
+                    dropdownElement.innerHTML = '';
+                    dropdownElement.style.display = 'none';
                     return;
                 }
 
-// Compute optimal location using Weiszfeld’s algorithm
-// const result = computeOptimalLocation_Weiszfeld(destinations);
+                if (currentRequest) {
+                    currentRequest.abort(); // Cancel previous request
+                }
 
-const result = computeOptimalLocation_Grid(destinations);
+                dropdownElement.innerHTML = '<div class="autocomplete-dropdown-item">Searching...</div>';
+                dropdownElement.style.display = 'block';
+
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`;
                 
-// Add back average weighted distance
-let totalWeightedDistance = 0, totalWeight = 0;
-for (const dest of destinations) {
-    const dist = haversineDistance(result.lat, result.lon, dest.lat, dest.lon);
-    totalWeightedDistance += dist * dest.weight;
-    totalWeight += dest.weight;
-}
-result.avgWeightedDistance = totalWeightedDistance / totalWeight;
+                try {
+                    currentRequest = new XMLHttpRequest();
+                    currentRequest.open('GET', url);
+                    currentRequest.responseType = 'json';
+                    currentRequest.onload = function() {
+                        if (currentRequest.status === 200) {
+                            const data = currentRequest.response;
+                            dropdownElement.innerHTML = '';
+                            if (data.length > 0) {
+                                data.forEach(item => {
+                                    const div = document.createElement('div');
+                                    div.classList.add('autocomplete-dropdown-item');
+                                    div.textContent = item.display_name;
+                                    div.addEventListener('click', () => {
+                                        inputElement.value = item.display_name;
+                                        inputElement.dataset.lat = item.lat;
+                                        inputElement.dataset.lon = item.lon;
+                                        dropdownElement.innerHTML = '';
+                                        dropdownElement.style.display = 'none';
+                                        
+                                        // Preview on map
+                                        previewDestination(inputElement.closest('.destination-input-group'), item.lat, item.lon, item.display_name);
+                                    });
+                                    dropdownElement.appendChild(div);
+                                });
+                            } else {
+                                dropdownElement.innerHTML = '<div class="autocomplete-dropdown-item">No results found</div>';
+                            }
+                        } else {
+                            dropdownElement.innerHTML = '<div class="autocomplete-dropdown-item">Error fetching results</div>';
+                        }
+                    };
+                    currentRequest.onerror = function() {
+                        dropdownElement.innerHTML = '<div class="autocomplete-dropdown-item">Network error</div>';
+                    };
+                    currentRequest.send();
+                } catch (error) {
+                    console.error('Autocomplete fetch error:', error);
+                    dropdownElement.innerHTML = '<div class="autocomplete-dropdown-item">Error</div>';
+                }
+            });
 
-optimalLocation = result;
+            // Hide dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!inputElement.contains(e.target) && !dropdownElement.contains(e.target)) {
+                    dropdownElement.style.display = 'none';
+                }
+            });
+        }
 
+        // Preview destination on map
+        function previewDestination(inputGroup, lat, lon, name) {
+            const index = Array.from(document.querySelectorAll('.destination-input-group')).indexOf(inputGroup);
+            
+            // Remove existing marker for this input group if it exists
+            const existingMarker = destinationMarkers.getLayers().find(layer => layer.options.id === `dest-marker-${index}`);
+            if (existingMarker) {
+                destinationMarkers.removeLayer(existingMarker);
+            }
 
-                
-                // Visualize results
-                await visualizeResults();
-                displayResults();
+            // Add new marker
+            const marker = L.marker([lat, lon], { id: `dest-marker-${index}` }).addTo(destinationMarkers)
+                .bindPopup(`${name} (ID: ${String.fromCharCode(65 + index)})`);
+            
+            // Optionally, pan map to new marker
+            // map.panTo(new L.LatLng(lat, lon));
+        }
 
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred while calculating the optimal location');
-            } finally {
-                document.getElementById('loading').classList.remove('show');
+        // Add Destination Input
+        function addDestinationInput() {
+            const container = document.getElementById('destinationInputs');
+            const newGroup = document.createElement('div');
+            newGroup.classList.add('destination-input-group');
+            newGroup.innerHTML = `
+                <input type="text" class="location-input" placeholder="Enter destination" data-lat="" data-lon="">
+                <input type="number" class="weight-input" value="1" min="1" title="Weight">
+                <div class="autocomplete-dropdown"></div>
+                <button class="btn btn-remove" onclick="removeDestination(this)">Remove</button>
+            `;
+            container.appendChild(newGroup);
+
+            const newInput = newGroup.querySelector('.location-input');
+            const newDropdown = newGroup.querySelector('.autocomplete-dropdown');
+            setupAutocomplete(newInput, newDropdown);
+
+            updateDestinationList();
+        }
+
+        // Remove Destination Input
+        function removeDestination(button) {
+            const inputGroup = button.closest('.destination-input-group');
+            const index = Array.from(document.querySelectorAll('.destination-input-group')).indexOf(inputGroup);
+            
+            // Remove marker from map
+            const existingMarker = destinationMarkers.getLayers().find(layer => layer.options.id === `dest-marker-${index}`);
+            if (existingMarker) {
+                destinationMarkers.removeLayer(existingMarker);
+            }
+
+            inputGroup.remove();
+            updateDestinationList(); // Update the displayed list
+            
+            // If destinations are removed, recalculate optimal location (optional, depends on UX preference)
+            if (destinations.length > 0) {
+                 calculateOptimalLocation();
+            } else {
+                displayResults("Enter destinations and click \"Calculate Optimal Location\" to see results.");
+                if (optimalMarker) {
+                    map.removeLayer(optimalMarker);
+                    optimalMarker = null;
+                }
             }
         }
 
-        // Visualize results on map
-        async function visualizeResults() {
-            // Add destinations
-            destinations.forEach((dest, index) => {
-    const letter = getDestinationLetter(index);
-    const marker = L.marker([dest.lat, dest.lon], {
-        icon: L.divIcon({
-            html: `<div style="background: #e74c3c; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">${letter}</div>`,
-            iconSize: [30, 30],
-            className: 'custom-marker'
-        })
-    }).bindPopup(`
-        <strong>${letter}. ${dest.name}</strong><br>
-        Weight: ${dest.weight}<br>
-        <small>${dest.display_name}</small>
-    `);
-                layerGroups.destinations.addLayer(marker);
+        // Update Destination List Display
+        function updateDestinationList() {
+            const listContainer = document.getElementById('destinationsList');
+            listContainer.innerHTML = '';
+            
+            const inputGroups = document.querySelectorAll('.destination-input-group');
+            inputGroups.forEach((group, index) => {
+                const nameInput = group.querySelector('.location-input');
+                const weightInput = group.querySelector('.weight-input');
+                
+                const itemName = nameInput.value || `Destination ${String.fromCharCode(65 + index)}`;
+                const itemWeight = weightInput.value || '1';
+
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('destination-item');
+                itemDiv.innerHTML = `
+                    <span>${String.fromCharCode(65 + index)}: ${itemName} (Weight: ${itemWeight})</span>
+                    <button class="btn btn-secondary btn-remove" onclick="removeDestination(this)">Remove</button>
+                `;
+                listContainer.appendChild(itemDiv);
             });
-
-
-            // Add optimal location
-            const optimalMarker = L.marker([optimalLocation.lat, optimalLocation.lon], {
-                icon: L.divIcon({
-                    html: `<div style="background: #27ae60; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 4px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.4); font-size: 18px;">★</div>`,
-                    iconSize: [40, 40],
-                    className: 'optimal-marker'
-                })
-            }).bindPopup(`
-                <strong>🏠 Optimal Location</strong><br>
-                Avg Weighted Distance: ${optimalLocation.avgWeightedDistance.toFixed(2)} km<br>
-                Coordinates: ${optimalLocation.lat.toFixed(6)}, ${optimalLocation.lon.toFixed(6)}
-            `);
-            layerGroups.optimal.addLayer(optimalMarker);
-
-            // Fit map to show all points
-            const allPoints = [...destinations.map(d => [d.lat, d.lon]), [optimalLocation.lat, optimalLocation.lon]];
-            map.fitBounds(allPoints, { padding: [20, 20] });
         }
 
-        // Display results
-        function displayResults() {
-            const resultsContent = document.getElementById('resultsContent');
+        // Haversine Distance Calculation
+        function haversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of Earth in kilometers
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c;
+            return distance;
+        }
+
+        // Calculate Optimal Location
+        async function calculateOptimalLocation() {
+            destinations = [];
+            const inputGroups = document.querySelectorAll('.destination-input-group');
+
+            inputGroups.forEach(group => {
+                const lat = parseFloat(group.querySelector('.location-input').dataset.lat);
+                const lon = parseFloat(group.querySelector('.location-input').dataset.lon);
+                const name = group.querySelector('.location-input').value;
+                const weight = parseInt(group.querySelector('.weight-input').value);
+
+                if (!isNaN(lat) && !isNaN(lon) && weight > 0) {
+                    destinations.push({ lat, lon, name, weight });
+                }
+            });
+
+            if (destinations.length === 0) {
+                alert("Please add at least one valid destination with coordinates.");
+                displayResults("Enter destinations and click \"Calculate Optimal Location\" to see results.");
+                if (optimalMarker) {
+                    map.removeLayer(optimalMarker);
+                    optimalMarker = null;
+                }
+                return;
+            }
+
+            displayResults("Calculating optimal location...");
+
+            // Determine search bounds based on destinations
+            let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
+            destinations.forEach(d => {
+                minLat = Math.min(minLat, d.lat);
+                maxLat = Math.max(maxLat, d.lat);
+                minLon = Math.min(minLon, d.lon);
+                maxLon = Math.max(maxLon, d.lon);
+            });
+
+            // Expand bounds slightly to ensure optimal point isn't exactly on edge
+            const latBuffer = (maxLat - minLat) * 0.1 || 0.01;
+            const lonBuffer = (maxLon - minLon) * 0.1 || 0.01;
+
+            minLat -= latBuffer;
+            maxLat += latBuffer;
+            minLon -= lonBuffer;
+            maxLon += lonBuffer;
+
+            // Initial grid resolution (e.g., 0.1 degrees)
+            let bestLat = (minLat + maxLat) / 2;
+            let bestLon = (minLon + maxLon) / 2;
+            let minAvgWeightedDistance = Infinity;
+
+            // Iterative refinement
+            const numIterations = 5; // Number of times to refine the search
+            const initialStep = Math.max((maxLat - minLat) / 10, (maxLon - minLon) / 10, 0.01); // Initial step size
+
+            for (let iter = 0; iter < numIterations; iter++) {
+                const currentStep = initialStep / Math.pow(2, iter); // Halve step size each iteration
+                const searchAreaLatMin = bestLat - currentStep * 5;
+                const searchAreaLatMax = bestLat + currentStep * 5;
+                const searchAreaLonMin = bestLon - currentStep * 5;
+                const searchAreaLonMax = bestLon + currentStep * 5;
+
+                for (let lat = searchAreaLatMin; lat <= searchAreaLatMax; lat += currentStep) {
+                    for (let lon = searchAreaLonMin; lon <= searchAreaLonMax; lon += currentStep) {
+                        let totalWeightedDistance = 0;
+                        let totalWeight = 0;
+
+                        destinations.forEach(dest => {
+                            const dist = haversineDistance(lat, lon, dest.lat, dest.lon);
+                            totalWeightedDistance += dist * dest.weight;
+                            totalWeight += dest.weight;
+                        });
+
+                        const avgWeightedDistance = totalWeightedDistance / totalWeight;
+
+                        if (avgWeightedDistance < minAvgWeightedDistance) {
+                            minAvgWeightedDistance = avgWeightedDistance;
+                            bestLat = lat;
+                            bestLon = lon;
+                        }
+                    }
+                }
+            }
             
-            let html = `
-                <div class="result-item">
-                    <strong>🎯 Optimal Location</strong><br>
-                    Coordinates: ${optimalLocation.lat.toFixed(6)}, ${optimalLocation.lon.toFixed(6)}<br>
-                    Average Weighted Distance: ${optimalLocation.avgWeightedDistance.toFixed(2)} km
+            optimalLocation = {
+                lat: bestLat,
+                lon: bestLon,
+                avgWeightedDistance: minAvgWeightedDistance
+            };
+
+            displayResults(`
+                <p><strong>Optimal Location Found!</strong></p>
+                <p>Latitude: <strong>${optimalLocation.lat.toFixed(6)}</strong></p>
+                <p>Longitude: <strong>${optimalLocation.lon.toFixed(6)}</strong></p>
+                <p>Average Weighted Distance to Destinations: <strong>${optimalLocation.avgWeightedDistance.toFixed(2)} km</strong></p>
+                <p style="font-size: 0.9em; color: #777;">(This is the point that minimizes the sum of distances to all destinations, weighted by their importance.)</p>
+            `);
+
+            // Clear previous optimal marker
+            if (optimalMarker) {
+                map.removeLayer(optimalMarker);
+            }
+
+            // Add optimal location marker
+            optimalMarker = L.marker([optimalLocation.lat, optimalLocation.lon], {
+                icon: L.divIcon({
+                    className: 'optimal-location-icon',
+                    html: '<div style="background-color:#27ae60; color:white; border-radius:50%; width:30px; height:30px; display:flex; justify-content:center; align-items:center; font-weight:bold; font-size:1.2em; border:3px solid #fff;">★</div>',
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                })
+            }).addTo(map)
+                .bindPopup(`Optimal Location: ${optimalLocation.lat.toFixed(6)}, ${optimalLocation.lon.toFixed(6)}`)
+                .openPopup();
+
+            // Fit map to include all destinations and optimal location
+            const allPoints = destinations.map(d => [d.lat, d.lon]);
+            allPoints.push([optimalLocation.lat, optimalLocation.lon]);
+            const bounds = L.latLngBounds(allPoints);
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+
+        function displayResults(htmlContent) {
+            document.getElementById('results').innerHTML = htmlContent;
+        }
+
+        function resetForm() {
+            document.getElementById('destinationInputs').innerHTML = `
+                <div class="destination-input-group">
+                    <input type="text" class="location-input" placeholder="Enter destination (e.g., 'Paris Eiffel Tower')" data-lat="" data-lon="">
+                    <input type="number" class="weight-input" value="1" min="1" title="Weight">
+                    <div class="autocomplete-dropdown"></div>
+                    <button class="btn btn-remove" onclick="removeDestination(this)">Remove</button>
                 </div>
             `;
-
-            destinations.forEach((dest, index) => {
-                const distance = haversineDistance(optimalLocation.lat, optimalLocation.lon, dest.lat, dest.lon);
-                html += `
-                    <div class="result-item">
-                        <strong>${index + 1}. ${dest.name}</strong><br>
-                        Distance from optimal: ${distance.toFixed(2)} km<br>
-                        Weight: ${dest.weight}<br>
-                        Weighted contribution: ${(distance * dest.weight).toFixed(2)} km·weight
-                    </div>
-                `;
-            });
-
-// Add heatmap if available
-if (optimalLocation.heatmapPoints && optimalLocation.heatmapPoints.length > 0) {
-    // Normalize scores for color mapping
-    const scores = optimalLocation.heatmapPoints.map(p => p.score);
-    const minScore = Math.min(...scores);
-    const maxScore = Math.max(...scores);
-    
-    optimalLocation.heatmapPoints.forEach(point => {
-        const normalizedScore = (point.score - minScore) / (maxScore - minScore);
-        const opacity = 0.3 + (1 - normalizedScore) * 0.4; // Better points = more opaque
-        const color = getColorForDistance(point.score, minScore, maxScore);
-        
-        const heatCircle = L.circle([point.lat, point.lon], {
-            color: color,
-            fillColor: color,
-            fillOpacity: opacity,
-            radius: 200, // 200m radius circles
-            weight: 1
-        }).bindPopup(`
-            <strong>🔥 Good Location Zone</strong><br>
-            Avg Weighted Distance: ${point.score.toFixed(2)} km<br>
-            Rank: Top 5%
-        `);
-        
-        layerGroups.grid.addLayer(heatCircle);
-    });
-}
-            
-            html += `
-    <div class="result-item">
-        <strong>📊 Analysis Summary</strong><br>
-        Total destinations: ${destinations.length}<br>
-        Heatmap zones shown: ${optimalLocation.heatmapPoints ? optimalLocation.heatmapPoints.length : 0}<br>
-        <small>🔥 Red circles show top 5% alternative locations</small>
-    </div>
-            `;
-
-            resultsContent.innerHTML = html;
-            document.getElementById('results').style.display = 'block';
+            const initialInput = document.querySelector('.location-input');
+            const initialDropdown = document.querySelector('.autocomplete-dropdown');
+            setupAutocomplete(initialInput, initialDropdown);
+            updateDestinationList();
+            destinations = [];
+            optimalLocation = null;
+            displayResults("Enter destinations and click \"Calculate Optimal Location\" to see results.");
+            // Clear all markers from the map
+            destinationMarkers.clearLayers();
+            if (optimalMarker) {
+                map.removeLayer(optimalMarker);
+                optimalMarker = null;
+            }
+            // Re-initialize map to default view
+            initMap();
         }
 
+        function checkPageBreak(doc, yPos, requiredSpace) {
+            // A4 page height is approx 297mm. Top/bottom margins typically 10mm each.
+            // Content area approx 277mm.
+            // jsPDF coordinates are in 'pt' by default, 1mm = 2.83465 pt.
+            // Assuming default units (mm or pt), let's use a simplified check
+            // assuming an effective page height.
+            const pageHeight = doc.internal.pageSize.height;
+            const bottomMargin = 20; // Example bottom margin
 
-function captureMapAsImage() {
-    return new Promise((resolve) => {
-        // Use leaflet-image to generate an image from the map
-        leafletImage(map, function(err, canvas) {
-            if (err) {
-                console.error("Error capturing map image:", err);
-                resolve(null); // Resolve with null on error
+            if (yPos + requiredSpace > pageHeight - bottomMargin) {
+                doc.addPage();
+                return 20; // New Y position at top of new page
+            }
+            return yPos;
+        }
+
+        async function downloadReport() {
+            if (!optimalLocation || destinations.length === 0) {
+                alert('No results to generate report');
                 return;
             }
-            // The canvas generated by leaflet-image already contains the map, tiles, and markers.
-            // Convert it directly to a data URL.
-            resolve(canvas.toDataURL('image/png'));
-        }, {
-            // Options object for leaflet-image
-            // Recommended sizes for PDF embedding. Adjust these values based on
-            // how you want the map to appear in your PDF and the resolution you need.
-            // A common aspect ratio for maps is 4:3 (width:height) or 16:9.
-            width: 800,   // Width of the captured image in pixels
-            height: 533,  // Height of the captured image in pixels (approx 4:3 for 800px width, for 16:9 try 450)
-            // You might need a white background if your map tiles have transparency or
-            // if you want a consistent look in the PDF, especially if there are gaps in tile loading.
-            // background: 'white'
-        });
-    });
-}
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Title
+            doc.setFontSize(20);
+            doc.setFont(undefined, 'bold');
+            doc.text('Optimal Location Analysis Report', 20, 25);
+
+            // Timestamp and additional info
+            const timestamp = new Date().toLocaleString();
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Generated on: ${timestamp}`, 20, 35);
+            doc.text('Generated by Optimal Location Finder', 20, 42);
+            doc.text(`Visit: ${window.location.origin}${window.location.pathname}`, 20, 49);
+
+            let yPos = 60;
+
+            // Optimal Location Details (Highlighted)
+            doc.setFillColor(39, 174, 96); // Green background
+            doc.rect(15, yPos - 5, 180, 25, 'F');
+            doc.setTextColor(255, 255, 255); // White text
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('OPTIMAL LOCATION', 20, yPos + 5);
+
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Coordinates: ${optimalLocation.lat.toFixed(6)}, ${optimalLocation.lon.toFixed(6)}`, 20, yPos + 12);
+            doc.text(`Average Weighted Distance: ${optimalLocation.avgWeightedDistance.toFixed(2)} km`, 20, yPos + 18);
+
+            yPos += 35;
+            doc.setTextColor(0, 0, 0); // Reset to black
+
+            // Map Image - AWAIT the result from captureMapAsImage
+            try {
+                const mapImage = await captureMapAsImage(); // <--- CHANGE IS HERE: AWAIT THE PROMISE
+                if (mapImage) { // Only add if image was successfully generated
+                    // Parameters: imageData, format, x, y, width, height
+                    // Adjust width/height as needed for your PDF layout, maintaining aspect ratio
+                    // The aspect ratio from leafletImage options (800x533) is ~1.5.
+                    // If you use 170mm width for PDF, height should be 170 / 1.5 = ~113.33mm
+                    doc.addImage(mapImage, 'PNG', 20, yPos, 170, 113.33);
+                    yPos += 125; // Increase yPos to account for image height plus some margin
+                } else {
+                    doc.setFontSize(10);
+                    doc.text('Map visualization not available', 20, yPos);
+                    yPos += 15;
+                }
+            } catch (error) {
+                console.error('Could not capture map:', error);
+                doc.setFontSize(10);
+                doc.text('Map visualization not available due to an error.', 20, yPos);
+                yPos += 15;
+            }
+
+            // Check if we need a new page for the table
+            yPos = checkPageBreak(doc, yPos, 30);
+
+            // Destinations Table
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('Destinations Summary', 20, yPos);
+            yPos += 10;
+
+            // Table headers
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'bold');
+            doc.text('ID', 20, yPos);
+            doc.text('Name', 35, yPos);
+            doc.text('Weight', 100, yPos);
+            doc.text('Distance from Optimal', 130, yPos);
+            doc.text('Weighted Impact', 175, yPos);
+
+            // Table header line
+            doc.line(15, yPos + 2, 195, yPos + 2);
+            yPos += 8;
+
+            // Table rows
+            doc.setFont(undefined, 'normal');
+            destinations.forEach((dest, index) => {
+                yPos = checkPageBreak(doc, yPos, 8);
+                const distance = haversineDistance(optimalLocation.lat, optimalLocation.lon, dest.lat, dest.lon);
+                const letter = String.fromCharCode(65 + index);
+
+                doc.text(letter, 20, yPos);
+                doc.text(dest.name.length > 15 ? dest.name.substring(0, 15) + '...' : dest.name, 35, yPos);
+                doc.text(dest.weight.toString(), 100, yPos);
+                doc.text(`${distance.toFixed(2)} km`, 130, yPos);
+                doc.text(`${(distance * dest.weight).toFixed(2)}`, 175, yPos);
+                yPos += 6;
+            });
+
+
+            // Analysis Summary
+            yPos += 10;
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('Analysis Summary', 20, yPos);
+            yPos += 8;
+
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Total destinations analyzed: ${destinations.length}`, 20, yPos);
+            yPos += 5;
+            doc.text(`Optimization method: Iterative grid search with adaptive refinement`, 20, yPos);
+            yPos += 5;
+            doc.text(`Search resolution: Up to 100-meter precision`, 20, yPos);
+
+
+            // Save PDF
+            const reportTimestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+            doc.save(`optimal_location_report_${reportTimestamp}.pdf`);
+        }
+
+        function captureMapAsImage() {
+            return new Promise((resolve) => {
+                leafletImage(map, function(err, canvas) {
+                    if (err) {
+                        console.error("Error capturing map image:", err);
+                        resolve(null);
+                        return;
+                    }
+                    resolve(canvas.toDataURL('image/png'));
+                }, {
+                    width: 800,
+                    height: 533, // maintain ~1.5 aspect ratio
+                });
+            });
+        }
         
         // Export results to CSV
-        function exportResults() {
-            if (!optimalLocation || destinations.length === 0) {
-                alert('No results to export');
+        function exportDestinations() {
+            if (destinations.length === 0) {
+                alert("No destinations to export.");
                 return;
             }
 
-const dataToExport = {
-    optimalLocation: {
-        lat: optimalLocation.lat,
-        lon: optimalLocation.lon,
-        avgWeightedDistance: optimalLocation.avgWeightedDistance
-    },
-    destinations: destinations.map(dest => ({
-        name: dest.name,
-        location: dest.location,
-        lat: dest.lat,
-        lon: dest.lon,
-        weight: dest.weight,
-        displayName: dest.display_name // Use display_name for clarity
-    }))
-};
+            const data = destinations.map(d => ({
+                name: d.name,
+                latitude: d.lat,
+                longitude: d.lon,
+                weight: d.weight
+            }));
 
-const json = JSON.stringify(dataToExport, null, 2); // null, 2 for pretty printing
-
-
-            
-            // Download file
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = window.URL.createObjectURL(blob);
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.style.display = 'none';
             a.href = url;
-const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-            a.download = `optimal_location_results_${timestamp}.json`;
-            
+            a.download = 'destinations.json';
             document.body.appendChild(a);
             a.click();
-            window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
+        // Import Destinations from JSON
+        function importDestinations(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
 
-function checkPageBreak(doc, currentY, requiredSpace = 20) {
-    if (currentY + requiredSpace > 270) { // Leave space for page margins
-        doc.addPage();
-        return 20; // Reset to top of new page
-    }
-    return currentY;
-}
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // Clear existing destinations and markers
+                    resetForm(); // Clears map, inputs, and results
 
-        
-async function downloadReport() {
-    if (!optimalLocation || destinations.length === 0) {
-        alert('No results to generate report');
-        return;
-    }
+                    const container = document.getElementById('destinationInputs');
+                    container.innerHTML = ''; // Clear default input group
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+                    let validDestinations = [];
 
-    // Title
-    doc.setFontSize(20);
-    doc.setFont(undefined, 'bold');
-    doc.text('Optimal Location Analysis Report', 20, 25);
+                    importedData.forEach((dest, index) => {
+                        // Create a new input group for each imported destination
+                        const newGroup = document.createElement('div');
+                        newGroup.classList.add('destination-input-group');
+                        newGroup.innerHTML = `
+                            <input type="text" class="location-input" placeholder="Enter destination" data-lat="" data-lon="">
+                            <input type="number" class="weight-input" value="1" min="1" title="Weight">
+                            <div class="autocomplete-dropdown"></div>
+                            <button class="btn btn-remove" onclick="removeDestination(this)">Remove</button>
+                        `;
+                        container.appendChild(newGroup);
 
-    // Timestamp and additional info
-    const timestamp = new Date().toLocaleString();
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
-    doc.text(`Generated on: ${timestamp}`, 20, 35);
-    doc.text('Generated by Optimal Location Finder', 20, 42);
-    doc.text(`Visit: ${window.location.origin}${window.location.pathname}`, 20, 49);
+                        const nameInput = newGroup.querySelector('.location-input');
+                        const weightInput = newGroup.querySelector('.weight-input');
+                        const dropdown = newGroup.querySelector('.autocomplete-dropdown');
 
-    let yPos = 60;
+                        // Set values from imported data
+                        nameInput.value = dest.name || '';
+                        nameInput.dataset.lat = dest.latitude;
+                        nameInput.dataset.lon = dest.longitude;
+                        weightInput.value = dest.weight || 1;
+                        
+                        // Setup autocomplete for the new input
+                        setupAutocomplete(nameInput, dropdown);
 
-    // Optimal Location Details (Highlighted)
-    doc.setFillColor(39, 174, 96); // Green background
-    doc.rect(15, yPos - 5, 180, 25, 'F');
-    doc.setTextColor(255, 255, 255); // White text
-    doc.setFontSize(14);
-    doc.setFont(undefined, 'bold');
-    doc.text('OPTIMAL LOCATION', 20, yPos + 5);
+                        // If valid coordinates, add to a temporary list for map plotting
+                        if (!isNaN(parseFloat(dest.latitude)) && !isNaN(parseFloat(dest.longitude))) {
+                            validDestinations.push({ 
+                                lat: parseFloat(dest.latitude), 
+                                lon: parseFloat(dest.longitude),
+                                name: dest.name,
+                                weight: dest.weight
+                            });
+                        }
+                    });
 
-    doc.setFontSize(11);
-    doc.setFont(undefined, 'normal');
-    doc.text(`Coordinates: ${optimalLocation.lat.toFixed(6)}, ${optimalLocation.lon.toFixed(6)}`, 20, yPos + 12);
-    doc.text(`Average Weighted Distance: ${optimalLocation.avgWeightedDistance.toFixed(2)} km`, 20, yPos + 18);
+                    // After all inputs are added, update the destination list display
+                    updateDestinationList();
 
-    yPos += 35;
-    doc.setTextColor(0, 0, 0); // Reset to black
+                    // Now plot all imported valid destinations on the map
+                    validDestinations.forEach((dest, index) => {
+                        const destinationItem = document.querySelectorAll('.destination-input-group')[index];
+                        const displayName = dest.name || `Destination ${String.fromCharCode(65 + index)}`;
+                        previewDestination(destinationItem, dest.lat, dest.lon, displayName);
+                    });
 
-    // Map Image - AWAIT the result from captureMapAsImage
-    try {
-        const mapImage = await captureMapAsImage(); // <--- CHANGE IS HERE: AWAIT THE PROMISE
-        if (mapImage) { // Only add if image was successfully generated
-            doc.addImage(mapImage, 'PNG', 20, yPos, 170, 113); // Maintain aspect ratio
-            yPos += 125;
-        } else {
-            doc.setFontSize(10);
-            doc.text('Map visualization not available', 20, yPos);
-            yPos += 15;
+                    // Recalculate optimal location for imported destinations
+                    if (validDestinations.length > 0) {
+                        calculateOptimalLocation();
+                    } else {
+                        alert("No valid destinations found in the imported file. Please check the format.");
+                    }
+
+
+                } catch (error) {
+                    console.error('Error importing JSON file:', error);
+                    alert("Could not parse the imported file. Please ensure it is a valid JSON format.");
+                    // No changes made to UI if parsing fails
+                }
+            };
+
+            reader.readAsText(file);
         }
-    } catch (error) {
-        console.error('Could not capture map:', error);
-        doc.setFontSize(10);
-        doc.text('Map visualization not available due to an error.', 20, yPos);
-        yPos += 15;
-    }
-
-    // Check if we need a new page for the table
-    yPos = checkPageBreak(doc, yPos, 30);
-
-    // Destinations Table
-    doc.setFontSize(14);
-    doc.setFont(undefined, 'bold');
-    doc.text('Destinations Summary', 20, yPos);
-    yPos += 10;
-
-    // Table headers
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'bold');
-    doc.text('ID', 20, yPos);
-    doc.text('Name', 35, yPos);
-    doc.text('Weight', 100, yPos);
-    doc.text('Distance from Optimal', 130, yPos);
-    doc.text('Weighted Impact', 175, yPos);
-
-    // Table header line
-    doc.line(15, yPos + 2, 195, yPos + 2);
-    yPos += 8;
-
-    // Table rows
-    doc.setFont(undefined, 'normal');
-    destinations.forEach((dest, index) => {
-        yPos = checkPageBreak(doc, yPos, 8);
-        const distance = haversineDistance(optimalLocation.lat, optimalLocation.lon, dest.lat, dest.lon);
-        const letter = String.fromCharCode(65 + index);
-
-        doc.text(letter, 20, yPos);
-        doc.text(dest.name.length > 15 ? dest.name.substring(0, 15) + '...' : dest.name, 35, yPos);
-        doc.text(dest.weight.toString(), 100, yPos);
-        doc.text(`${distance.toFixed(2)} km`, 130, yPos);
-        doc.text(`${(distance * dest.weight).toFixed(2)}`, 175, yPos);
-        yPos += 6;
-    });
-
-
-    // Analysis Summary
-    yPos += 10;
-    doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
-    doc.text('Analysis Summary', 20, yPos);
-    yPos += 8;
-
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
-    doc.text(`Total destinations analyzed: ${destinations.length}`, 20, yPos);
-    yPos += 5;
-    doc.text(`Optimization method: Iterative grid search with adaptive refinement`, 20, yPos);
-    yPos += 5;
-    doc.text(`Search resolution: Up to 100-meter precision`, 20, yPos);
-
-
-    // Save PDF
-    const reportTimestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-    doc.save(`optimal_location_report_${reportTimestamp}.pdf`);
-}
-        
-
-function importResults(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const importedData = JSON.parse(e.target.result);
-
-            // Basic validation: Check if required top-level keys exist
-            if (!importedData.destinations || !Array.isArray(importedData.destinations)) {
-                alert("Invalid JSON file: Missing or malformed 'destinations' array.");
-                return; // Stop if data is invalid
-            }
-
-            // Further validate each destination object
-            const validDestinations = importedData.destinations.filter(dest => {
-                return typeof dest.name === 'string' &&
-                       typeof dest.lat === 'number' && !isNaN(dest.lat) &&
-                       typeof dest.lon === 'number' && !isNaN(dest.lon) &&
-                       typeof dest.weight === 'number' && !isNaN(dest.weight);
-            });
-
-            if (validDestinations.length === 0) {
-                alert("No valid destinations found in the imported file. UI will not be updated.");
-                return; // Stop if no valid destinations
-            }
-
-            // If data is valid, clear current UI and populate
-            document.getElementById('destinationsContainer').innerHTML = ''; // Clear existing inputs
-            layerGroups.destinations.clearLayers(); // Clear existing markers
-
-            // Add destinations to UI and map
-            validDestinations.forEach(dest => {
-                const container = document.getElementById('destinationsContainer');
-                const destinationItem = document.createElement('div');
-                destinationItem.className = 'destination-item';
-
-                const letter = getDestinationLetter(container.children.length);
-
-                // Ensure display_name is populated, fallback to name
-                const displayName = dest.displayName || dest.name;
-
-                destinationItem.innerHTML = `
-                    <div class="destination-inputs">
-                        <div class="autocomplete-container">
-                            <input type="text" class="location-input" value="${displayName}" data-lat="${dest.lat}" data-lon="${dest.lon}" data-display-name="${displayName}">
-                            <div class="autocomplete-dropdown" style="display: none;"></div>
-                        </div>
-                        <input type="text" class="name-input" value="${dest.name}">
-                        <input type="number" class="weight-input" value="${dest.weight}" min="0.1" step="0.1">
-                    </div>
-                    <div class="destination-label">Destination: <span class="dest-letter">${letter}</span></div>
-                    <button class="btn btn-secondary remove-destination">Remove</button>
-                `;
-
-                container.appendChild(destinationItem);
-
-                // Re-attach autocomplete and remove event listeners
-                const input = destinationItem.querySelector('.location-input');
-                const dropdown = destinationItem.querySelector('.autocomplete-dropdown');
-                setupAutocomplete(input, dropdown);
-
-                destinationItem.querySelector('.remove-destination').addEventListener('click', function () {
-                    removeDestination(this);
-                });
-
-                // Plot on map immediately
-                previewDestination(destinationItem, dest.lat, dest.lon, displayName);
-            });
-
-            // Re-center map to fit imported destinations if desired (optional)
-            if (validDestinations.length > 0) {
-                const bounds = L.latLngBounds(validDestinations.map(d => [d.lat, d.lon]));
-                map.fitBounds(bounds, { padding: [20, 20] });
-            }
-
-
-        } catch (error) {
-            console.error('Error importing JSON file:', error);
-            alert("Could not parse the imported file. Please ensure it is a valid JSON format.");
-            // No changes made to UI if parsing fails
-        }
-    };
-
-    reader.readAsText(file);
-}
 
 
 
