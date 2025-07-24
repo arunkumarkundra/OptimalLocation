@@ -1160,8 +1160,8 @@ if (optimalLocation.heatmapPoints && optimalLocation.heatmapPoints.length > 0) {
             Avg Weighted Distance: ${point.score.toFixed(2)} km<br>
             Rank: Top 5%
         `);
-        
-        layerGroups.grid.addLayer(heatCircle);
+// Disabled HeatMap layer        
+//        layerGroups.grid.addLayer(heatCircle);
     });
 }
             
@@ -1169,8 +1169,9 @@ if (optimalLocation.heatmapPoints && optimalLocation.heatmapPoints.length > 0) {
     <div class="result-item">
         <strong>📊 Analysis Summary</strong><br>
         Total destinations: ${destinations.length}<br>
-        Heatmap zones shown: ${optimalLocation.heatmapPoints ? optimalLocation.heatmapPoints.length : 0}<br>
-        <small>🔥 Red circles show top 5% alternative locations</small>
+     // HeatMap disabled
+     //    Heatmap zones shown: ${optimalLocation.heatmapPoints ? optimalLocation.heatmapPoints.length : 0}<br>
+     //    <small>🔥 Red circles show top 5% alternative locations</small>
     </div>
             `;
 
