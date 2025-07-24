@@ -509,9 +509,11 @@ function computeOptimalLocation_Grid(destinations, cellThreshold = 100) {
 
         console.log(`Iteration ${iteration + 1}: Cell size ~${Math.round(avgCellSizeMeters)}m, Bounds: ${minLat.toFixed(4)}-${maxLat.toFixed(4)}, ${minLon.toFixed(4)}-${maxLon.toFixed(4)}`);
 
+        If (iteration>0){
         if (avgCellSizeMeters <= cellThreshold) {
             console.log(`Converged at ${Math.round(avgCellSizeMeters)}m resolution`);
             break;
+        }
         }
 
         // Generate 100x100 grid
